@@ -724,7 +724,6 @@ class CharacterControllerDemo {
     this.u;
 
     
-
     this._threejs.outputEncoding = THREE.sRGBEncoding;
     this._threejs.shadowMap.enabled = true;
     this._threejs.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -786,7 +785,7 @@ class CharacterControllerDemo {
 
     this._listToDo = ["env sky","env land","gates","textFall","GateText","Question","Camera",
                       "StateRun","StateWalk","StateDance","StateFall","StateIdle"];
-    
+    var parameters = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat, stencilBuffer: false };
     this._LoadParticleEnv();
     this._LoadParticleEnvSky();
     this._LoadGates();
@@ -837,15 +836,18 @@ class CharacterControllerDemo {
       const renderScene = new RenderPass( this._scene, this._camera );
 
       const bloomPass = new UnrealBloomPass( new THREE.Vector2( window.innerWidth, window.innerHeight ), 1.5, 0.4, 0.85 );
-		  bloomPass.threshold = 0.1;
+		  bloomPass.threshold = 0;
 			bloomPass.strength = 1.0;
-			bloomPass.radius = 0.75;
+			bloomPass.radius = 0;
+      var parameters = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat, stencilBuffer: false };
 
-      this._bloomComposer = new EffectComposer( this._threejs );
+      var renderTarget = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, parameters );
+
+      this._bloomComposer = new EffectComposer( this._threejs)
 			this._bloomComposer.renderToScreen = false;
 			this._bloomComposer.addPass( renderScene );
 			this._bloomComposer.addPass( bloomPass );
-      this._bloomComposer.toneMappingExposure = 10;
+      //this._bloomComposer.toneMappingExposure = 10;
       
 
       const finalPass = new ShaderPass(
@@ -861,7 +863,7 @@ class CharacterControllerDemo {
 			);
 			finalPass.needsSwap = true;
 
-    this._finalComposer = new EffectComposer( this._threejs );
+    this._finalComposer = new EffectComposer( this._threejs,renderTarget );
     this._finalComposer.addPass( renderScene );
     this._finalComposer.addPass( finalPass );
     this._glitchPass = new GlitchPass();
@@ -1013,7 +1015,7 @@ class CharacterControllerDemo {
       .add( function(){ gsap.to(this.up02.atime, { duration: 3, value: 2 }) }.bind(this),"-=6")
       //.add( function(){ gsap.to(mainCamera, { duration: 2, fov: 40 }) }.bind(this),"-=1.5")
       //.add( function(){ gsap.to(this.up02.atime, { duration: 3, value: 2 }) }.bind(this),"-=2.5")
-      .add( function(){ this._gameMode = true }.bind(this))
+      .add( function(){ this._gameMode = true }.bind(this),"-=4")
       
       
 
