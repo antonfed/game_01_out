@@ -728,7 +728,8 @@ class CharacterControllerDemo {
     this._threejs.shadowMap.enabled = true;
     this._threejs.shadowMap.type = THREE.PCFSoftShadowMap;
     this._threejs.setPixelRatio(window.devicePixelRatio);
-    this._threejs.setSize(this._width, this._height); 
+    this._threejs.setSize(this._width, this._height);
+    this._threejs.toneMapping = THREE.ACESFilmicToneMapping; 
 
     document.body.appendChild(this._threejs.domElement);
 
@@ -836,9 +837,10 @@ class CharacterControllerDemo {
       const renderScene = new RenderPass( this._scene, this._camera );
 
       const bloomPass = new UnrealBloomPass( new THREE.Vector2( window.innerWidth, window.innerHeight ), 1.5, 0.4, 0.85 );
-		  bloomPass.threshold = 0;
-			bloomPass.strength = 1.0;
+		  bloomPass.threshold = 0.3;
+			bloomPass.strength = 0.5;
 			bloomPass.radius = 0;
+      console.log(bloomPass);
       var parameters = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat, stencilBuffer: false };
 
       var renderTarget = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, parameters );
@@ -847,6 +849,7 @@ class CharacterControllerDemo {
 			this._bloomComposer.renderToScreen = false;
 			this._bloomComposer.addPass( renderScene );
 			this._bloomComposer.addPass( bloomPass );
+      this._bloomComposer.toneMapping = THREE.ACESFilmicToneMapping; 
       //this._bloomComposer.toneMappingExposure = 10;
       
 
@@ -867,7 +870,8 @@ class CharacterControllerDemo {
     this._finalComposer.addPass( renderScene );
     this._finalComposer.addPass( finalPass );
     this._glitchPass = new GlitchPass();
-
+    this._finalComposer.toneMapping = THREE.ACESFilmicToneMapping;
+    this._finalComposer.toneMappingExposure = 1.5;
     //this._glitchPass.goWild = 1;
     //this._glitchPass.curF = 0;
 
@@ -1346,7 +1350,7 @@ class CharacterControllerDemo {
 
     this.up02.wPos.value = this._controls._target.getWorldPosition(new THREE.Vector3());
     this.up02.utime.value+=timeElapsed*0.00001;
-    console.log(this.up03);
+
     this.up03.time.value+=timeElapsed*0.0001;
     
     const timeElapsedS = timeElapsed * 0.001;
