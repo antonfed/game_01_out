@@ -837,9 +837,9 @@ class CharacterControllerDemo {
       const renderScene = new RenderPass( this._scene, this._camera );
 
       const bloomPass = new UnrealBloomPass( new THREE.Vector2( window.innerWidth, window.innerHeight ), 1.5, 0.4, 0.85 );
-		  bloomPass.threshold = 0.3;
-			bloomPass.strength = 0.5;
-			bloomPass.radius = 0;
+		  bloomPass.threshold = 0.1;
+			bloomPass.strength = 1;
+			bloomPass.radius = 0.5;
       console.log(bloomPass);
       var parameters = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat, stencilBuffer: false };
 
