@@ -48,7 +48,7 @@ class BasicCharacterController {
   }
 
   _Init(params) {
-    
+    console.log("startFBX_01")
     this.forward;
     this.material;
     this.animTexture;
@@ -90,15 +90,18 @@ class BasicCharacterController {
   }
 
   _LoadModels() {
-
+    console.log("startFBX_02")
     const texture = new THREE.TextureLoader().load('resources/glitch.jpg' );
+    
     texture.wrapS = THREE.RepeatWrapping;
     texture.wrapT = THREE.RepeatWrapping;
     this.animTexture = document.getElementById( 'video' );
 	  const videoTexture = new THREE.VideoTexture(this.animTexture);
     const loader = new FBXLoader();
     loader.setPath('./resources/zombie/');
+    
     loader.load('mremireh_o_desbiens_my.fbx', (fbx) => {
+      console.log("startFBX_02.5")  
       fbx.scale.setScalar(0.1);
       fbx.traverse(c => {
         c.castShadow = true;
@@ -108,7 +111,7 @@ class BasicCharacterController {
         if ( c.material )c.material.map = videoTexture;
         if ( c.material )c.material.emissive = new THREE.Color( 0xff0000 );
       });
-
+      
       this._target = fbx;
       this._params.scene.add(this._target);
 
@@ -133,6 +136,7 @@ class BasicCharacterController {
 
       const loader = new FBXLoader(this._manager);
       loader.setPath('./resources/zombie/');
+      console.log("startFBX_03")
       loader.load('walk.fbx', (a) => { _OnLoad('walk', a);this._params.level._loadProgress("walk") });
       loader.load('run.fbx', (a) => { _OnLoad('run', a);this._params.level._loadProgress("run") });
       loader.load('idle.fbx', (a) => { _OnLoad('idle', a);this._params.level._loadProgress("idle") });
@@ -746,7 +750,6 @@ class CharacterControllerDemo {
     const near = 1.0;
     const far = 1000.0;
     this._cameraGame = new THREE.PerspectiveCamera(fov, this._aspect, near, far);
-    this._camera = new THREE.PerspectiveCamera(fov, this._aspect, near, far);
     this._cameraGame.position.set(0, 0, 0);
 
     this.cameraControls = new OrbitControls(
@@ -781,14 +784,13 @@ class CharacterControllerDemo {
 
     this._listToDo = ["env sky","env land","gates","textFall","GateText","Question","Camera",
                       "StateRun","StateWalk","StateFall","StateIdle"];
-    this._bloomSetup();
+    this._LoadAnimatedModel();
     this._LoadParticleEnv();
     this._LoadParticleEnvSky();
     this._LoadGates();
-    this._LoadTextFall();  
+    this._LoadTextFall();
     this._LoadGateText();
     this._LoadQuestion01Animation();
-    this._LoadAnimatedModel();
     this._LoadCamera();
     this._LoadInfoSphere();
 
@@ -841,6 +843,7 @@ class CharacterControllerDemo {
 		  bloomPass.threshold = 0.01;
 			bloomPass.strength = 1;
 			bloomPass.radius = 0.7;
+      console.log(bloomPass);
 
       
       
@@ -1061,6 +1064,7 @@ class CharacterControllerDemo {
 
       this._scene.add(fbx.scene);
       
+      this._bloomSetup();
    
     });
   this._loadProgress("camera"); 
@@ -1199,6 +1203,7 @@ class CharacterControllerDemo {
         c.castShadow = true;
         c.material = m;
       });
+      console.log(gltf.scene.children[0].geometry);
       this._scene.add(gltf.scene.clone());
       //gltf.scene.position.add(new THREE.Vector3(0,-3,0));  
       this._scene.add(gltf.scene);
