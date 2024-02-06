@@ -8,6 +8,8 @@ import { RenderPass } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/
 import { ShaderPass } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/postprocessing/ShaderPass.js';
 import { GlitchPass } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/postprocessing/GlitchPass.js';
 import { UnrealBloomPass } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/postprocessing/OutputPass.js';
+import { GUI } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/libs/lil-gui.module.min.js';
 import TouchControls from './resources/controller/TouchControls.js'
 
 
@@ -134,7 +136,7 @@ class BasicCharacterController {
       loader.load('walk.fbx', (a) => { _OnLoad('walk', a);this._params.level._loadProgress("walk") });
       loader.load('run.fbx', (a) => { _OnLoad('run', a);this._params.level._loadProgress("run") });
       loader.load('idle.fbx', (a) => { _OnLoad('idle', a);this._params.level._loadProgress("idle") });
-      loader.load('StandingUp.fbx', (a) => { _OnLoad('dance', a);this._params.level._loadProgress("dance") });
+      //loader.load('StandingUp.fbx', (a) => { _OnLoad('dance', a);this._params.level._loadProgress("dance") });
       loader.load('Fall.fbx', (a) => { _OnLoad('fall', a);this._params.level._loadProgress("fall") });
     });
   }
@@ -443,11 +445,11 @@ class FallState extends State {
       curAction.setLoop(THREE.LoopOnce, 1);
       curAction.clampWhenFinished = true;
       //curAction.crossFadeFrom(prevAction, 0.5, true);
-      curAction.timeScale = 1.0/debugFactor;
+      curAction.timeScale = 1.0/debugFactor*0.25;
       curAction.play();
     } else {
       curAction.setLoop(THREE.LoopOnce, 1);
-      curAction.timeScale = 1.0/debugFactor;
+      curAction.timeScale = 1.0/debugFactor*0.25;
       curAction.play();
     }
   }
@@ -675,7 +677,7 @@ class CharacterControllerDemo {
   _prevPos = new THREE.Vector3(0,0,0);
   _gameMode = false;
   _animTextureGates = document.getElementById( 'video' );
-  _locomotive;
+  _locomotive = new THREE.Object3D()
   //bloompass
   _materials = {};
   _darkMaterial = new THREE.MeshBasicMaterial( { color: 'black' } );
@@ -707,8 +709,6 @@ class CharacterControllerDemo {
 
   _Initialize() {
 
-    loadProgress = this._loadProgress;
-
     document.getElementById( 'startButton').style.display = "none";
     this._bloomLayer.set( BLOOM_SCENE );
     this._questionTimeline = gsap.timeline({
@@ -729,7 +729,11 @@ class CharacterControllerDemo {
     this._threejs.shadowMap.type = THREE.PCFSoftShadowMap;
     this._threejs.setPixelRatio(window.devicePixelRatio);
     this._threejs.setSize(this._width, this._height);
-    this._threejs.toneMapping = THREE.ACESFilmicToneMapping; 
+    this._threejs.toneMapping = THREE.ACESFilmicToneMappin;
+    //this._finalComposer.toneMapping = THREE.ACESFilmicToneMappin;
+    //this._finalComposer.toneMappingExposure = 0.01;
+    //outputPass.toneMapping = THREE.ACESFilmicToneMappin;
+    //outputPass.toneMappingExposure = 0.1;
 
     document.body.appendChild(this._threejs.domElement);
 
@@ -742,10 +746,11 @@ class CharacterControllerDemo {
     const near = 1.0;
     const far = 1000.0;
     this._cameraGame = new THREE.PerspectiveCamera(fov, this._aspect, near, far);
+    this._camera = new THREE.PerspectiveCamera(fov, this._aspect, near, far);
     this._cameraGame.position.set(0, 0, 0);
 
     this.cameraControls = new OrbitControls(
-      this._cameraGame, this._threejs.domElement);
+    this._cameraGame, this._threejs.domElement);
     this.cameraControls.target.set(0, 0, -150);
     this.cameraControls.update();
     
@@ -771,28 +776,19 @@ class CharacterControllerDemo {
 
     light = new THREE.AmbientLight(0xFFFFFF, 0.25);
     this._scene.add(light);
-    
-    const loader = new THREE.CubeTextureLoader();
-    const texture = loader.load([
-        './resources/posx.jpg',
-        './resources/negx.jpg',
-        './resources/posy.jpg',
-        './resources/negy.jpg',
-        './resources/posz.jpg',
-        './resources/negz.jpg',
-    ]);
-    texture.encoding = THREE.sRGBEncoding;
+
     this._scene.background = new THREE.Color( 0x1F1A27 );
 
     this._listToDo = ["env sky","env land","gates","textFall","GateText","Question","Camera",
-                      "StateRun","StateWalk","StateDance","StateFall","StateIdle"];
-    var parameters = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat, stencilBuffer: false };
+                      "StateRun","StateWalk","StateFall","StateIdle"];
+    this._bloomSetup();
     this._LoadParticleEnv();
     this._LoadParticleEnvSky();
     this._LoadGates();
-    this._LoadTextFall();
+    this._LoadTextFall();  
     this._LoadGateText();
     this._LoadQuestion01Animation();
+    this._LoadAnimatedModel();
     this._LoadCamera();
     this._LoadInfoSphere();
 
@@ -814,10 +810,11 @@ class CharacterControllerDemo {
 
 
   _levelStart() {     
-    document.body.addEventListener('click', this._progressAnimation.bind(this), true); 
+     
     this._controls.animTexture.play();  
     this._questionTimeline.play();
-    this._RAF();    
+    this._RAF();
+    document.body.addEventListener('click', this._progressAnimation.bind(this), true);    
   }
 
 
@@ -834,23 +831,52 @@ class CharacterControllerDemo {
 				scene: 'Scene with Glow'
 			};
 
+
+
+
+
       const renderScene = new RenderPass( this._scene, this._camera );
 
       const bloomPass = new UnrealBloomPass( new THREE.Vector2( window.innerWidth, window.innerHeight ), 1.5, 0.4, 0.85 );
-		  bloomPass.threshold = 0.1;
+		  bloomPass.threshold = 0.01;
 			bloomPass.strength = 1;
-			bloomPass.radius = 0.5;
-      console.log(bloomPass);
-      var parameters = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat, stencilBuffer: false };
+			bloomPass.radius = 0.7;
 
+      
+      
+      const gui = new GUI();
+      const folder = gui.addFolder( 'Bloom Parameters' );
+      folder.add( params, 'bloomThreshold', 0.0, 1.0 ).onChange( function ( value ) {
+
+				bloomPass.threshold = Number( value );
+				render();
+
+			} );
+
+			folder.add( params, 'bloomStrength', 0.0, 100.0 ).onChange( function ( value ) {
+
+				bloomPass.strength = Number( value );
+				render();
+
+			} );
+
+			folder.add( params, 'bloomRadius', 0.0, 100.0 ).step( 0.01 ).onChange( function ( value ) {
+
+				bloomPass.radius = Number( value );
+				render();
+
+			} );
+
+      var parameters = { minFilter: THREE.LinearFilter, type: THREE.HalfFloatType , magFilter: THREE.LinearFilter, format: THREE.RGBAFormat, colorSpace: THREE.SRGBColorSpace, stencilBuffer: false };
       var renderTarget = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, parameters );
 
-      this._bloomComposer = new EffectComposer( this._threejs)
+
+
+      this._bloomComposer = new EffectComposer( this._threejs,renderTarget)
+      this._bloomComposer.setSize(window.innerWidth, window.innerHeight);
 			this._bloomComposer.renderToScreen = false;
 			this._bloomComposer.addPass( renderScene );
 			this._bloomComposer.addPass( bloomPass );
-      this._bloomComposer.toneMapping = THREE.ACESFilmicToneMapping; 
-      //this._bloomComposer.toneMappingExposure = 10;
       
 
       const finalPass = new ShaderPass(
@@ -865,17 +891,27 @@ class CharacterControllerDemo {
 				} ), 'baseTexture'
 			);
 			finalPass.needsSwap = true;
+    
+    
 
-    this._finalComposer = new EffectComposer( this._threejs,renderTarget );
+    this._glitchPass = new GlitchPass();
+    
+    this._threejs.toneMapping = THREE.ACESFilmicToneMapping;
+    this._threejs.toneMappingExposure = 1;
+    const outputPass = new OutputPass(this._threejs);
+
+    this._finalComposer = new EffectComposer( this._threejs );
+    this._finalComposer.setSize(window.innerWidth, window.innerHeight);
     this._finalComposer.addPass( renderScene );
     this._finalComposer.addPass( finalPass );
-    this._glitchPass = new GlitchPass();
-    this._finalComposer.toneMapping = THREE.ACESFilmicToneMapping;
-    this._finalComposer.toneMappingExposure = 1.5;
+    //this._finalComposer.addPass( this._glitchPass );
+    this._finalComposer.addPass( outputPass );
+
+    
     //this._glitchPass.goWild = 1;
     //this._glitchPass.curF = 0;
 
-    this._finalComposer.addPass( this._glitchPass );
+    
   }
 
 
@@ -888,7 +924,6 @@ class CharacterControllerDemo {
 
   _LoadAnimatedModel() {
     const params = {
-      camera: this._camera,
       scene: this._locomotive,
       level: this,
     }
@@ -989,7 +1024,7 @@ class CharacterControllerDemo {
     
     const loader = new GLTFLoader();
     loader.load('./resources/out.glb', (fbx) => {
-      this._locomotive = fbx.scene.getObjectByName('export_locomotive');
+      fbx.scene.getObjectByName('export_locomotive').add(this._locomotive);
       fbx.scene.traverse(c => {
         
         if ( c instanceof THREE.Camera ) {
@@ -1025,8 +1060,7 @@ class CharacterControllerDemo {
 
 
       this._scene.add(fbx.scene);
-      this._LoadAnimatedModel();
-      this._bloomSetup();
+      
    
     });
   this._loadProgress("camera"); 
@@ -1169,26 +1203,38 @@ class CharacterControllerDemo {
       //gltf.scene.position.add(new THREE.Vector3(0,-3,0));  
       this._scene.add(gltf.scene);
     });
+    //console.log(gltf.scene)
     this._loadProgress("land_particles");
   }
 
   _LoadParticleEnv() {
-    const loader = new GLTFLoader();
+    var points = [];
+    var numPoints_i = 301;
+    var numPoints_j = 801;
 
+    // Create the points
+    for (var i = 0; i < numPoints_i; i++) {
+        for (var j = 0; j < numPoints_j; j++) {
+            var x = i / numPoints_i * 800- 400; // Scale the x position to range from -5 to 5
+            var z = j / numPoints_j * 800 - 400; // Scale the y position to range from -5 to 5
+            var y = 0; // Set z position to 0
+            points.push(x, y, z);
+          }
+      }
     
 
-    //const material = new THREE.PointsMaterial( { color: 0x888888 } );
-    loader.load('./resources/land.glb', (gltf) => {
       let u = {
-        utime: {value: 192.54},
+        utime: {value: 0},
         atime: {value: 0.5},
         wPos: {value: new THREE.Vector3(0,0,0)},
         lightPos: {value: new THREE.Vector3()}
       }
       let m = new THREE.PointsMaterial({
         size: 1.0, 
-        color: 0xF0EED2,
-        map: new THREE.TextureLoader().load("https://threejs.org/examples/textures/sprites/circle.png"),
+        color: 0xFFFFFF,
+        transparent: true,
+        depthWrite: false,
+        map: new THREE.TextureLoader().load("/resources/particles/p01.png"),
         onBeforeCompile: shader => {
           shader.uniforms.utime = u.utime;
           shader.uniforms.atime = u.atime;
@@ -1242,15 +1288,34 @@ class CharacterControllerDemo {
       });
       
       this.up02 = u;
+    // Create a new buffer geometry and set the positions
+    var geometry = new THREE.BufferGeometry();
+    const array = new Float32Array( points );
+    geometry.setAttribute( 'position', new THREE.BufferAttribute( array, 3 ) );
+    var pointsMesh = new THREE.Points(geometry, m);
 
-      gltf.scene.traverse(c => {
-        c.castShadow = true;
-        c.material = m;
-      });
-      this._scene.add(gltf.scene.clone());
-      //gltf.scene.position.add(new THREE.Vector3(0,-3,0));  
-      this._scene.add(gltf.scene);
-    });
+    this._scene.add(pointsMesh);
+    /////!THIS NOISE HAVE SOME ISSUES WHEN POSITIONS IN IN NATURAL NUMBERS! THATS WHY 101
+    var points = [];
+    var numPoints = 101;
+
+    // Create the points
+    for ( let i = 0; i < 10000; i ++ ) {
+      const x = THREE.MathUtils.randFloatSpread( 2000 );
+      const y = THREE.MathUtils.randFloatSpread( 100 );
+      const z = THREE.MathUtils.randFloatSpread( 2000 );
+    
+      points.push( x, y, z );
+    }
+
+    var geometry = new THREE.BufferGeometry();
+    const array1 = new Float32Array( points );
+    geometry.setAttribute( 'position', new THREE.BufferAttribute( array1, 3 ) );
+    var pointsMesh = new THREE.Points(geometry, m);
+    pointsMesh.layers.toggle(BLOOM_SCENE);
+
+    this._scene.add(pointsMesh);
+    
     this._loadProgress("sky _particles");
   }
 
@@ -1304,21 +1369,21 @@ class CharacterControllerDemo {
 
   _Step(timeElapsed) {
 
-    //this._glitchTimer +=timeElapsed;
-    //console.log(this._glitchPass.uniforms);
-    //this._glitchPass.curF = this._glitchTimer*0.001*10;
-    //this._glitchPass.uniforms.amount.value=0.00001;
-    //this._glitchPass.uniforms.distortion_x.value=0.00001;
-    //this._glitchPass.uniforms.distortion_y.value=0.00001;
-    //this._glitchPass.uniforms.col_s.value=0.0001;
-    //this._glitchPass.uniforms.angle.value=0.0001;
-    //this._glitchPass.uniforms.byp.value=0.0001;
+    this._glitchTimer +=timeElapsed;
+    this._glitchPass.curF = this._glitchTimer*0.001*10;
+    this._glitchPass.uniforms.amount.value=0.00001;
+    this._glitchPass.uniforms.distortion_x.value=0.00001;
+    this._glitchPass.uniforms.distortion_y.value=0.00001;
+    this._glitchPass.uniforms.col_s.value=0.0001;
+    this._glitchPass.uniforms.angle.value=0.0001;
+    this._glitchPass.uniforms.byp.value=0.0001;
     
 
 
     
 
-    this._renderBloom();
+    
+ 
     
     
     const currPos = this._controls._target.getWorldPosition(new THREE.Vector3());
@@ -1365,7 +1430,10 @@ class CharacterControllerDemo {
     if (this._controls) {
       this._controls.Update(timeElapsedS);
     }
-  this._finalComposer.render(this._scene, this._camera.object);
+    this._renderBloom();
+    this._finalComposer.render(this._scene, this._camera);
+  //_renderBloom();
+  //this._threejs.render(this._scene, this._camera)
   }
 }
 
