@@ -1135,12 +1135,16 @@ class CharacterControllerDemo {
         c.castShadow = true;
         if ( c.material )c.material.emissive = new THREE.Color( 0xffffff );
       });
-      this._scene.add(gltf.scene);
+      this._scene.add(gltf.scene.clone());
+      gltf.scene.geometry.translate(0,-1000,0);
+      this._scene.add(gltf.scene.clone());
 
     });
     loader.load('./resources/black_text.glb', (gltf) => {
 
-      this._scene.add(gltf.scene);
+      this._scene.add(gltf.scene.clone());
+      gltf.scene.geometry.translate(0,-1000,0);
+      this._scene.add(gltf.scene.clone());
     });
     this._loadProgress("text_fall");
   }
