@@ -83,9 +83,11 @@ class BasicCharacterController {
       hitTestDistance: 40    // distance to test for hit
       }
       this._touchControls = new TouchControls(document.body, camera_mew, options);
+      this._touchControls.movementPad.padElement.style.opacity=0.0;
       this._touchControls.movementPad.padElement.addEventListener('stopMove', (event) => {
         this._input._keys.forward = false;
         this._input._keys.shift = false;
+        
       }); 
   }
 
@@ -1061,13 +1063,12 @@ class CharacterControllerDemo {
       .add( function(){ this._controls._stateMachine.SetState('idle'); }.bind(this))
       .add( function(){ this._controls._stateMachine.SetState('fall'); }.bind(this))
       .to(action, { duration: animation.duration*debugFactor, time: animation.duration,ease: "none"})
-
-      //.to(this._camera, { duration: 2, fov: 46 })
+      
       .add( function(){ gsap.to(mainCamera, { duration: 2, fov: 66 }) }.bind(this),"-=4")
       .add( function(){ gsap.to(this.up02.atime, { duration: 3, value: 2 }) }.bind(this),"-=6")
-      //.add( function(){ gsap.to(mainCamera, { duration: 2, fov: 40 }) }.bind(this),"-=1.5")
-      //.add( function(){ gsap.to(this.up02.atime, { duration: 3, value: 2 }) }.bind(this),"-=2.5")
       .add( function(){ this._gameMode = true }.bind(this),"-=4")
+      .add( function(){ gsap.to(document.getElementsByClassName("movement-pad")[0].style, { duration: 2, opacity: 1 }) }.bind(this),"-=4")
+      
       
       
 
@@ -1249,7 +1250,7 @@ class CharacterControllerDemo {
         color: 0xFFFFFF,
         transparent: true,
         depthWrite: false,
-        map: new THREE.TextureLoader().load("/resources/particles/p01.png"),
+        map: new THREE.TextureLoader().load("./resources/particles/p01.png"),
         onBeforeCompile: shader => {
           shader.uniforms.utime = u.utime;
           shader.uniforms.atime = u.atime;
