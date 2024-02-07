@@ -901,7 +901,7 @@ class CharacterControllerDemo {
 
 
   _levelStart() {     
-     
+    document.getElementById( 'startButton').style.display = "none"; 
     this._controls.animTexture.play();  
     this._questionTimeline.play();
     this._RAF();
@@ -997,7 +997,7 @@ class CharacterControllerDemo {
     this._finalComposer.setSize(window.innerWidth, window.innerHeight);
     this._finalComposer.addPass( renderScene );
     this._finalComposer.addPass( finalPass );
-    //this._finalComposer.addPass( this._glitchPass );
+    this._finalComposer.addPass( this._glitchPass );
     //this._finalComposer.addPass( outputPass );
 
     
@@ -1132,7 +1132,7 @@ class CharacterControllerDemo {
       const animation = fbx.animations[0];
       const action = this._cameraMixer.clipAction(animation );
       action.play();
-      action.paused = true;
+      
       action.setLoop(THREE.LoopOnce);
       //action.clampWhenFinished = true;
       action.enable = true;      
@@ -1144,7 +1144,7 @@ class CharacterControllerDemo {
       .to(action, { duration: animation.duration*debugFactor, time: animation.duration,ease: "none"})
       
       .add( function(){ gsap.to(mainCamera, { duration: 2, fov: 66 }) }.bind(this),"-=4")
-      .add( function(){ gsap.to(this.up02.atime, { duration: 3, value: 2 }) }.bind(this),"-=12")
+      .add( function(){ gsap.to(this.up02.atime, { duration: 3, value: 2 }) }.bind(this),"-=11.9")
       .add( function(){ this._gameMode = true }.bind(this),"-=4")
       .add( function(){ this._textblack.visible = false }.bind(this),"-=6")
       .add( function(){ this._textwhite.visible = false }.bind(this),"-=6")
@@ -1155,9 +1155,10 @@ class CharacterControllerDemo {
       
       
 
-
+      action.paused = true;
+      action.paused = true;
+      action.paused = true;
       this._scene.add(fbx.scene);
-      
       this._bloomSetup();
    
     });
@@ -1171,7 +1172,7 @@ class CharacterControllerDemo {
       gltf.scene.traverse(c => {
         c.castShadow = true;
         if ( c.material )c.material = createStandartBloomMat();
-        if ( c.material )c.material.color = new THREE.Color( 0x999999 );
+        if ( c.material )c.material.color = new THREE.Color( 0xffffff );
         if ( c.material )c.material.roughness = 1;
         if ( c.material )c.material.metalness = 1.0;
       });
@@ -1638,8 +1639,8 @@ class CharacterControllerDemo {
 
   _Step(timeElapsed) {
 
-    this._glitchTimer +=timeElapsed;
-    this._glitchPass.curF = this._glitchTimer*0.001*10;
+    //this._glitchTimer +=timeElapsed;
+    //this._glitchPass.curF = this._glitchTimer*0.001*10;
     this._glitchPass.uniforms.amount.value=0.00001;
     this._glitchPass.uniforms.distortion_x.value=0.00001;
     this._glitchPass.uniforms.distortion_y.value=0.00001;

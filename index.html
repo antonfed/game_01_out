@@ -9,11 +9,34 @@
     .ui {
       position: absolute;    		
     }
+    body {
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+    }
+
+    #startButton {
+    display: inline-block;
+    padding: 10px 20px;
+    border: 2px solid #ffffff; /* Border color */
+    border-radius: 20px; /* Rounded border */
+    background-color: transparent; /* Transparent background */
+    color: #ffffff; /* Text color */
+    font-size: 18px;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.3s, color 0.3s, border-color 0.3s; /* Smooth transition */
+  }
   
   </style>
 </head>
 <body>
-  <button id="startButton" style="display: block;" class="ui">Play</button>
+    <button id="startButton" style="display: block;" class="ui">Play</button>
+  
   <video id="video" loop crossOrigin="anonymous" playsinline style="display:none">
     <source src="./resources/lsm1_1.mp4" type='video/mp4; codecs="avc1.42E01E, mp4a.40.2"'>
   </video>
