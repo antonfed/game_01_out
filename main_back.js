@@ -12,70 +12,10 @@ import { OutputPass } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/
 import { GUI } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/libs/lil-gui.module.min.js';
 import TouchControls from './resources/controller/TouchControls.js'
 
-THREE.ShaderChunk.fog_pars_vertex += `
-#ifdef USE_FOG
-  varying vec3 vWorldPosition;
-#endif
-`;
-
-    THREE.ShaderChunk.fog_vertex += `
-#ifdef USE_FOG
-  vec4 worldPosition = modelMatrix * vec4(position, 1.0); // From local position to global position
-  vWorldPosition = worldPosition.xyz;
-#endif
-`;
-
-    // fragment shader
-    THREE.ShaderChunk.fog_pars_fragment += `
-#ifdef USE_FOG
-  varying vec3 vWorldPosition;
-
-    
-
-  float fogHeight = 2000.0;
-#endif
-`;
-
-    const FOG_APPLIED_LINE = 'gl_FragColor.rgb = mix( gl_FragColor.rgb, fogColor, fogFactor );';
-    THREE.ShaderChunk.fog_fragment = THREE.ShaderChunk.fog_fragment.replace(FOG_APPLIED_LINE, `
-  float fogFactor2 = smoothstep( fogHeight, -100.0, vWorldPosition.y-cameraPosition.y  );
-
-  fogFactor = fogFactor*fogFactor2;
-
-  ${FOG_APPLIED_LINE}
-`);
-
-let uniforms = {
-  globalDark: {value: 0},
-}
-
-function createStandartBloomMat()
-{
 
 
-const masterMaterial = new THREE.MeshStandardMaterial(
-  {
-    roughness: 0.6,
-    metalness: 0.5,
-	onBeforeCompile: shader => {
-    shader.uniforms.globalDark = uniforms.globalDark;
-    shader.fragmentShader = `
-      uniform float globalDark;
-      ${shader.fragmentShader}
-    `.replace(
-      `#include <dithering_fragment>`,
-      `#include <dithering_fragment>
-        if (globalDark < 0.5) {
-        	gl_FragColor.rgb = vec3(0);
-        }
-        
-      `
-    );
-    }
-  }
-);
-return masterMaterial
-}
+
+
 
 
 
@@ -779,7 +719,24 @@ class CharacterControllerDemo {
   }
 
   _Initialize() {
+                // Set up the scene
+                const scene = new THREE.Scene();
 
+                // Set up the camera
+                const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                camera.position.z = 5;
+
+        
+                // Create a box geometry
+                const geometry = new THREE.BoxGeometry();
+                // Create a basic material
+                const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+                // Create a mesh with the geometry and material
+                const cube = new THREE.Mesh(geometry, material);
+                // Add the cube to the scene
+                
+    
+                //renderer.render(scene, camera);
     document.getElementById( 'startButton').style.display = "none";
     this._bloomLayer.set( BLOOM_SCENE );
     this._questionTimeline = gsap.timeline({
@@ -795,13 +752,13 @@ class CharacterControllerDemo {
     this.u;
 
     
-    this._threejs.outputEncoding = THREE.sRGBEncoding;
+    //this._threejs.outputEncoding = THREE.sRGBEncoding;
     //this._threejs.shadowMap.enabled = true;
-    //this._threejs.shadowMap.type = THREE.PCFSoftShadowMap;
+    this._threejs.shadowMap.type = THREE.PCFSoftShadowMap;
     this._threejs.setPixelRatio(window.devicePixelRatio);
     this._threejs.setSize(this._width, this._height);
-    this._threejs.toneMapping = THREE.ACESFilmicToneMappin;
-    this._threejs.setClearColor(0x000000, 0.0);
+    //this._threejs.toneMapping = THREE.ACESFilmicToneMappin;
+    //this._threejs.setClearColor(0x000000, 0.0);
     //this._finalComposer.toneMapping = THREE.ACESFilmicToneMappin;
     //this._finalComposer.toneMappingExposure = 0.01;
     //outputPass.toneMapping = THREE.ACESFilmicToneMappin;
@@ -825,13 +782,11 @@ class CharacterControllerDemo {
     this.cameraControls.target.set(0, 0, -168);
     this.cameraControls.update();
     
-    const geometry = new THREE.SphereGeometry( 2000, 40, 40 ); 
-    const material = new THREE.MeshStandardMaterial( ); 
+    const geometry1 = new THREE.SphereGeometry( 2000, 40, 40 ); 
+    const material1 = new THREE.MeshStandardMaterial( ); 
 
     
-    this._background = new THREE.Mesh( geometry, createStandartBloomMat() );
-    console.log(this._background.material);
-    //this._background.material.uniforms.globalDark.value = uniforms.globalDark.value;
+    this._background = new THREE.Mesh( geometry1, material1 );
     this._background.material.side = THREE.BackSide;
     this._background.material.color = new THREE.Color( 0x000000 );
     this._background.material.emissive = new THREE.Color( 0x888888 );
@@ -839,8 +794,41 @@ class CharacterControllerDemo {
 
      
     this._locomotive.add( this._background);
+        // vertex shader
+    /*
+        THREE.ShaderChunk.fog_pars_vertex += `
+    #ifdef USE_FOG
+      varying vec3 vWorldPosition;
+    #endif
+    `;
+
+        THREE.ShaderChunk.fog_vertex += `
+    #ifdef USE_FOG
+      vWorldPosition = worldPosition.xyz;
+    #endif
+    `;
+
+        // fragment shader
+        THREE.ShaderChunk.fog_pars_fragment += `
+    #ifdef USE_FOG
+      varying vec3 vWorldPosition;
+    
+      
+
+      float fogHeight = 2000.0;
+    #endif
+    `;
     
 
+        const FOG_APPLIED_LINE = 'gl_FragColor.rgb = mix( gl_FragColor.rgb, fogColor, fogFactor );';
+        THREE.ShaderChunk.fog_fragment = THREE.ShaderChunk.fog_fragment.replace(FOG_APPLIED_LINE, `
+      float fogFactor2 = smoothstep( fogHeight, -100.0, vWorldPosition.y-cameraPosition.y  );
+    
+      fogFactor = fogFactor*fogFactor2;
+
+      ${FOG_APPLIED_LINE}
+    `);
+    */
     this._scene.fog = new THREE.Fog( 0x000000, 500, 1200 );
     console.log(this._scene.fog);
 
@@ -870,17 +858,26 @@ class CharacterControllerDemo {
 
     this._listToDo = ["env sky","env land","gates","textFall","GateText","Question","Camera",
                       "StateRun","StateWalk","StateFall","StateIdle"];
-    this._LoadAnimatedModel();
-    this._LoadParticleEnv();
-    this._LoadParticleEnvSky();
-    this._LoadGates();
-    this._LoadTextFall();
-    this._LoadGateText();
-    this._LoadQuestion01Animation();
-    this._LoadCamera();
-    this._LoadInfoSphere();
+    //this._LoadAnimatedModel();
+    //this._LoadParticleEnv();
+    //this._LoadParticleEnvSky();
+    //this._LoadGates();
+    //this._LoadTextFall();
+    //this._LoadGateText();
+    //this._LoadQuestion01Animation();
+    //this._LoadCamera();
+    //this._LoadInfoSphere();
+    //this._threejs = renderer; 
+    this._camera = camera;
+    this._scene.add(cube);
+    //renderer.render(this._scene, this._camera);
 
-    
+
+
+
+
+    document.getElementById( 'startButton').style.display = "block";
+    document.getElementById( 'startButton').addEventListener( 'click', this._levelStart.bind(this));
     
 
    
@@ -899,10 +896,10 @@ class CharacterControllerDemo {
 
   _levelStart() {     
      
-    this._controls.animTexture.play();  
-    this._questionTimeline.play();
+    //this._controls.animTexture.play();  
+    //this._questionTimeline.play();
     this._RAF();
-    document.body.addEventListener('click', this._progressAnimation.bind(this), true);    
+    //document.body.addEventListener('click', this._progressAnimation.bind(this), true);    
   }
 
 
@@ -929,7 +926,7 @@ class CharacterControllerDemo {
 		  bloomPass.threshold = 0;
 			bloomPass.strength = 0.8;
 			bloomPass.radius = 0.5;
-      //console.log(bloomPass);
+      console.log(bloomPass);
 
       
       /*
@@ -958,7 +955,7 @@ class CharacterControllerDemo {
       */
 
       var parameters = { minFilter: THREE.LinearFilter, type: THREE.HalfFloatType , magFilter: THREE.LinearFilter, format: THREE.RGBAFormat, colorSpace: THREE.SRGBColorSpace, stencilBuffer: false };
-      var renderTarget = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, parameters );
+      //var renderTarget = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, parameters );
 
 
 
@@ -990,10 +987,10 @@ class CharacterControllerDemo {
     this._threejs.toneMappingExposure = 1;
     const outputPass = new OutputPass(this._threejs);
 
-    this._finalComposer = new EffectComposer( this._threejs);
+    this._finalComposer = new EffectComposer( this._threejs );
     this._finalComposer.setSize(window.innerWidth, window.innerHeight);
     this._finalComposer.addPass( renderScene );
-    this._finalComposer.addPass( finalPass );
+    //this._finalComposer.addPass( finalPass );
     //this._finalComposer.addPass( this._glitchPass );
     //this._finalComposer.addPass( outputPass );
 
@@ -1102,7 +1099,6 @@ class CharacterControllerDemo {
       this._gateTextMixer.push(mixer);
       fbx.traverse(c => {
         c.layers.toggle(BLOOM_SCENE);
-        
         if ( c.material )c.material.emissive = new THREE.Color( 0xfb204f );
       });
       this._scene.add(fbx); 
@@ -1141,10 +1137,10 @@ class CharacterControllerDemo {
       .add( function(){ this._controls._stateMachine.SetState('fall'); }.bind(this))
       .to(action, { duration: animation.duration*debugFactor, time: animation.duration,ease: "none"})
       
-      .add( function(){ gsap.to(mainCamera, { duration: 2, fov: 66 }) }.bind(this),"-=4")
-      .add( function(){ gsap.to(this.up02.atime, { duration: 3, value: 2 }) }.bind(this),"-=8")
-      .add( function(){ this._gameMode = true }.bind(this),"-=4")
-      .add( function(){ gsap.to(document.getElementsByClassName("movement-pad")[0].style, { duration: 2, opacity: 1 }) }.bind(this),"-=4")
+      .add( function(){ gsap.to(mainCamera, { duration: 2, fov: 66 }) }.bind(this),"-=8")
+      .add( function(){ gsap.to(this.up02.atime, { duration: 3, value: 2 }) }.bind(this),"-=12")
+      .add( function(){ this._gameMode = true }.bind(this),"-=16")
+      .add( function(){ gsap.to(document.getElementsByClassName("movement-pad")[0].style, { duration: 2, opacity: 1 }) }.bind(this),"-=8")
       
       
       
@@ -1164,7 +1160,6 @@ class CharacterControllerDemo {
     loader.load('./resources/white_text.glb', (gltf) => {
       gltf.scene.traverse(c => {
         c.castShadow = true;
-        if ( c.material )c.material = createStandartBloomMat();
         if ( c.material )c.material.emissive = new THREE.Color( 0xffffff );
       });
       this._scene.add(gltf.scene.clone());
@@ -1173,10 +1168,7 @@ class CharacterControllerDemo {
 
     });
     loader.load('./resources/black_text.glb', (gltf) => {
-      gltf.scene.traverse(c => {
-        c.castShadow = true;
-        if ( c.material )c.material = createStandartBloomMat();
-      });
+
       this._scene.add(gltf.scene.clone());
       //gltf.scene.geometry.translate(0,-1000,0);
       //this._scene.add(gltf.scene.clone());
@@ -1290,13 +1282,7 @@ class CharacterControllerDemo {
             `gl_PointSize = size;`,
             `gl_PointSize = size;`
           );
-          shader.uniforms.globalDark = uniforms.globalDark;
-          shader.fragmentShader = `
-          uniform float globalDark;
-          uniform sampler2D map;
-          void main() {
-          gl_FragColor = texture2D(map, gl_PointCoord)*globalDark*0.3;}`
-          }
+        }
       });
 
       this.up01 = u;
@@ -1305,7 +1291,7 @@ class CharacterControllerDemo {
         c.castShadow = true;
         c.material = m;
       });
-      //console.log(gltf.scene.children[0].geometry);
+      console.log(gltf.scene.children[0].geometry);
       this._scene.add(gltf.scene.clone());
       //gltf.scene.position.add(new THREE.Vector3(0,-3,0));  
       this._scene.add(gltf.scene);
@@ -1338,7 +1324,7 @@ class CharacterControllerDemo {
       }
       let m = new THREE.PointsMaterial({
         size: 1.0, 
-        color: 0x111111,
+        color: 0xbcbcbc,
         transparent: true,
         depthWrite: false,
         map: new THREE.TextureLoader().load("https://threejs.org/examples/textures/sprites/circle.png"),
@@ -1391,17 +1377,11 @@ class CharacterControllerDemo {
             `gl_PointSize = size;`,
             `gl_PointSize = size;`
           );
-          shader.uniforms.globalDark = uniforms.globalDark;
-          shader.fragmentShader = `
-          uniform float globalDark;
-          varying vec3 color;
-          uniform sampler2D map;
-          void main() {
-          gl_FragColor = texture2D(map, gl_PointCoord)*globalDark*0.6;}`
-          }
+        }
       });
       
       this.up02 = u;
+    /*
     // Create a new buffer geometry and set the positions
     var geometry = new THREE.BufferGeometry();
     const array = new Float32Array( points );
@@ -1421,63 +1401,7 @@ class CharacterControllerDemo {
     
       points.push( x, y, z );
     }
-    m = new THREE.PointsMaterial({
-      size: 1.0, 
-      color: 0xffffff,
-      transparent: true,
-      depthWrite: false,
-      map: new THREE.TextureLoader().load("https://threejs.org/examples/textures/sprites/circle.png"),
-      onBeforeCompile: shader => {
-        shader.uniforms.utime = u.utime;
-        shader.uniforms.atime = u.atime;
-        shader.uniforms.wPos = u.wPos;
-        shader.vertexShader = `
-          uniform float utime;
-          uniform float atime; // just the force of habit to add it :)
-          uniform vec3 lightPos;
-          uniform vec3 wPos;
-          varying float vShade;
-          
-          ${simplexNoise}
-          
-          float map(float value, float min1, float max1, float min2, float max2) {
-            return min2 + (value - min1) * (max2 - min2) / (max1 - min1);
-          }
-          
-          vec3 getPoint(vec3 p){
-            float dist = distance(wPos, position);
-            float mod = (utime*20.0)-(floor((utime*20.0)/(1.5))*(1.5));
-            float dist_anim = length(position)-atime*300.0;
-            float map01 = map(dist,50.0,500.0,0.7,0.0);
-            float map02 = clamp(map(dist+snoise( p*0.005 + utime*20.98)*10.0,50.0,500.0,0.0,30.0),0.0,20.0);
-            float map03 = clamp(map(dist+snoise( p*0.01 + utime*10.98)*30.0,100.0,400.0,0.0,100.0),0.0,4.0);
-            float map04 = clamp(map(dist+snoise( p*0.25 + utime*1.98)*30.0,150.0,300.0,0.0,300.0),0.0,5.0);
-            float anim01 = (clamp(map(dist_anim,-100.0,0.0,0.0,1.0),0.0,1.0)*clamp(map(dist_anim,-100.0,0.0,1.0,0.0),0.0,1.0))*100.0;
 
-            return p +
-            vec3(0,snoise( p*0.008 + utime )*10.0*clamp(map(distance(wPos, position),0.0,200.0,0.0,1.0),0.0,1.0),0)+
-            vec3(
-            0,
-              clamp(map(snoise( p*10.0 + utime*1.98 ),map01,1.0,0.0,1.0),0.0,1.0)*30.0*  
-              clamp(map(distance(wPos, position),0.0,200.0,0.0,1.0),0.0,1.0) + map01 + map02 - map03 + map04 + anim01
-            ,0);
-          }
-          
-          ${shader.vertexShader}
-        `.replace(
-          `#include <begin_vertex>`,
-          `#include <begin_vertex>
-            
-            vec3 p0 = getPoint(position);
-            
-            transformed = p0;
-          `
-        ).replace(
-          `gl_PointSize = size;`,
-          `gl_PointSize = size;`
-        );
-        }
-    });
     var geometry = new THREE.BufferGeometry();
     const array1 = new Float32Array( points );
     geometry.setAttribute( 'position', new THREE.BufferAttribute( array1, 3 ) );
@@ -1485,8 +1409,9 @@ class CharacterControllerDemo {
     pointsMesh.layers.toggle(BLOOM_SCENE);
 
     this._scene.add(pointsMesh);
-    
+    */
     this._loadProgress("sky _particles");
+    
   }
 
   _LoadModel() {
@@ -1508,9 +1433,20 @@ class CharacterControllerDemo {
   }
 
   _renderBloom() {
-      uniforms.globalDark.value=0;
+      this._scene.traverse(obj => {
+        if(this._bloomLayer.test( obj.layers ) === false){
+          this._materials[ obj.uuid ] = obj.material;
+          obj.material = this._darkMaterial;
+          
+        }
+      });
       this._bloomComposer.render();
-      uniforms.globalDark.value=1;
+      this._scene.traverse(obj => {
+        if ( this._materials[ obj.uuid ] ) {
+          obj.material = this._materials[ obj.uuid ];
+          delete this._materials[ obj.uuid ];
+        }
+      });
   }
 
   _RAF() {
@@ -1528,15 +1464,15 @@ class CharacterControllerDemo {
   }
 
   _Step(timeElapsed) {
-
-    this._glitchTimer +=timeElapsed;
-    this._glitchPass.curF = this._glitchTimer*0.001*10;
-    this._glitchPass.uniforms.amount.value=0.00001;
-    this._glitchPass.uniforms.distortion_x.value=0.00001;
-    this._glitchPass.uniforms.distortion_y.value=0.00001;
-    this._glitchPass.uniforms.col_s.value=0.0001;
-    this._glitchPass.uniforms.angle.value=0.0001;
-    this._glitchPass.uniforms.byp.value=0.0001;
+    /*
+    //this._glitchTimer +=timeElapsed;
+    //this._glitchPass.curF = this._glitchTimer*0.001*10;
+    //this._glitchPass.uniforms.amount.value=0.00001;
+    //this._glitchPass.uniforms.distortion_x.value=0.00001;
+    //this._glitchPass.uniforms.distortion_y.value=0.00001;
+    //this._glitchPass.uniforms.col_s.value=0.0001;
+    //this._glitchPass.uniforms.angle.value=0.0001;
+    //this._glitchPass.uniforms.byp.value=0.0001;
     
 
 
@@ -1590,15 +1526,20 @@ class CharacterControllerDemo {
     if (this._controls) {
       this._controls.Update(timeElapsedS);
     }
-    this._renderBloom();
-    this._finalComposer.render(this._scene, this._camera);
-  //this._renderBloom();
-  //this._threejs.render(this._scene, this._camera)
+    //this._renderBloom();
+    //this._finalComposer.render(this._scene, this._camera);
+  //_renderBloom();
+  */
+  this._threejs.render(this._scene, this._camera)
   }
 }
-
+let _APP = null;
+_APP = new CharacterControllerDemo()
+/*
 let _APP = null;
 
 window.addEventListener('DOMContentLoaded', () => {
   _APP = new CharacterControllerDemo();
 });
+
+*/
