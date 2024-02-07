@@ -528,6 +528,7 @@ class FallState extends State {
   _Finished() {
     this._Cleanup();
     //gsap.to(mainCamera, { duration: 5, fov: 120 });
+    console.log("END OF ANIMATION GO IDLE")
     this._parent.SetState('idle');
   }
 
@@ -662,7 +663,7 @@ class IdleState extends State {
       idleAction.enabled = true;
       idleAction.setEffectiveTimeScale(1.0);
       idleAction.setEffectiveWeight(1.0);
-      idleAction.crossFadeFrom(prevAction, 0.5, true);
+      idleAction.crossFadeFrom(prevAction, 0.3, true);
       idleAction.play();
     } else {
       idleAction.play();
@@ -830,7 +831,6 @@ class CharacterControllerDemo {
 
     
     this._background = new THREE.Mesh( geometry, createStandartBloomMat() );
-    console.log(this._background.material);
     //this._background.material.uniforms.globalDark.value = uniforms.globalDark.value;
     this._background.material.side = THREE.BackSide;
     this._background.material.color = new THREE.Color( 0x000000 );
@@ -842,7 +842,6 @@ class CharacterControllerDemo {
     
 
     this._scene.fog = new THREE.Fog( 0x000000, 500, 1200 );
-    console.log(this._scene.fog);
 
 
 
@@ -1044,7 +1043,6 @@ class CharacterControllerDemo {
 
 
   _Finished() {
-    this._gameMode = true;
     //gsap.to(this._camera, { duration: 10, fov: 120 });
     this._camera.updateProjectionMatrix();
     this._controls._stateMachine.SetState('dance');
@@ -1142,7 +1140,7 @@ class CharacterControllerDemo {
       .to(action, { duration: animation.duration*debugFactor, time: animation.duration,ease: "none"})
       
       .add( function(){ gsap.to(mainCamera, { duration: 2, fov: 66 }) }.bind(this),"-=4")
-      .add( function(){ gsap.to(this.up02.atime, { duration: 3, value: 2 }) }.bind(this),"-=8")
+      .add( function(){ gsap.to(this.up02.atime, { duration: 3, value: 2 }) }.bind(this),"-=12")
       .add( function(){ this._gameMode = true }.bind(this),"-=4")
       .add( function(){ gsap.to(document.getElementsByClassName("movement-pad")[0].style, { duration: 2, opacity: 1 }) }.bind(this),"-=4")
       
