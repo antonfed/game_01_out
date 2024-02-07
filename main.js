@@ -741,6 +741,7 @@ class CharacterControllerDemo {
     this._threejs.setPixelRatio(window.devicePixelRatio);
     this._threejs.setSize(this._width, this._height);
     this._threejs.toneMapping = THREE.ACESFilmicToneMappin;
+    this._threejs.setClearColor(0x000000, 0.0);
     //this._finalComposer.toneMapping = THREE.ACESFilmicToneMappin;
     //this._finalComposer.toneMappingExposure = 0.01;
     //outputPass.toneMapping = THREE.ACESFilmicToneMappin;
@@ -764,35 +765,78 @@ class CharacterControllerDemo {
     this.cameraControls.target.set(0, 0, -168);
     this.cameraControls.update();
     
-    const geometry = new THREE.BoxGeometry( 1, 1, 1 ); 
-    const material = new THREE.MeshBasicMaterial( {color: 0x00ff00} ); 
-    const cube = new THREE.Mesh( geometry, material ); 
-    this._scene.add( cube );
-    
-    
-    this._scene.fog = new THREE.Fog( 0x1F1A27, 400, 1000);
+    const geometry = new THREE.SphereGeometry( 2000, 40, 40 ); 
+    const material = new THREE.MeshStandardMaterial( ); 
 
-    let light = new THREE.DirectionalLight(0xFFFFFF, 5.0);
-    light.position.set(-100, 100, 100);
-    light.target.position.set(0, 0, 0);
+    
+    this._background = new THREE.Mesh( geometry, material );
+    this._background.material.side = THREE.BackSide;
+    this._background.material.color = new THREE.Color( 0x000000 );
+    this._background.material.emissive = new THREE.Color( 0x888888 );
+    
+
+     
+    this._locomotive.add( this._background);
+    
+        // vertex shader
+        THREE.ShaderChunk.fog_pars_vertex += `
+    #ifdef USE_FOG
+      varying vec3 vWorldPosition;
+    #endif
+    `;
+
+        THREE.ShaderChunk.fog_vertex += `
+    #ifdef USE_FOG
+      vWorldPosition = worldPosition.xyz;
+    #endif
+    `;
+
+        // fragment shader
+        THREE.ShaderChunk.fog_pars_fragment += `
+    #ifdef USE_FOG
+      varying vec3 vWorldPosition;
+    
+      
+
+      float fogHeight = 2000.0;
+    #endif
+    `;
+
+        const FOG_APPLIED_LINE = 'gl_FragColor.rgb = mix( gl_FragColor.rgb, fogColor, fogFactor );';
+        THREE.ShaderChunk.fog_fragment = THREE.ShaderChunk.fog_fragment.replace(FOG_APPLIED_LINE, `
+      float fogFactor2 = smoothstep( fogHeight, -100.0, vWorldPosition.y-cameraPosition.y  );
+    
+      fogFactor = fogFactor*fogFactor2;
+
+      ${FOG_APPLIED_LINE}
+    `);
+
+    this._scene.fog = new THREE.Fog( 0x000000, 500, 1200 );
+    console.log(this._scene.fog);
+
+
+
+    let light = new THREE.PointLight(0xFFFFFF, 10.0,0,0.3);
+    light.position.set(0, 4000, 0);
+    //light.target.position.set(0, 0, 0);
     light.castShadow = true;
-    light.shadow.bias = -0.001;
     light.shadow.mapSize.width = 4096;
     light.shadow.mapSize.height = 4096;
-    light.shadow.camera.near = 0.1;
-    light.shadow.camera.far = 500.0;
-    light.shadow.camera.near = 0.5;
-    light.shadow.camera.far = 500.0;
-    light.shadow.camera.left = 50;
-    light.shadow.camera.right = -50;
-    light.shadow.camera.top = 50;
-    light.shadow.camera.bottom = -50;
     this._scene.add(light);
 
-    light = new THREE.AmbientLight(0xFFFFFF, 0.25);
+    light = new THREE.PointLight(0xFFFFFF, 10.0,0,1);
+    light.position.set(0, 2000, 0);
+    //light.target.position.set(0, 0, 0);
+    light.castShadow = true;
+    light.shadow.mapSize.width = 4096;
+    light.shadow.mapSize.height = 4096;
     this._scene.add(light);
 
-    this._scene.background = new THREE.Color( 0x1F1A27 );
+    light = new THREE.AmbientLight(0xFFFFFF, 1);
+    this._scene.add(light);
+
+
+    this._scene.background = new THREE.Color( 0x000000 );
 
     this._listToDo = ["env sky","env land","gates","textFall","GateText","Question","Camera",
                       "StateRun","StateWalk","StateFall","StateIdle"];
@@ -852,13 +896,13 @@ class CharacterControllerDemo {
       const renderScene = new RenderPass( this._scene, this._camera );
 
       const bloomPass = new UnrealBloomPass( new THREE.Vector2( window.innerWidth, window.innerHeight ), 1.5, 0.4, 0.85 );
-		  bloomPass.threshold = 0.01;
-			bloomPass.strength = 1;
-			bloomPass.radius = 0.7;
+		  bloomPass.threshold = 0;
+			bloomPass.strength = 0.8;
+			bloomPass.radius = 0.5;
       console.log(bloomPass);
 
       
-      
+      /*
       const gui = new GUI();
       const folder = gui.addFolder( 'Bloom Parameters' );
       folder.add( params, 'bloomThreshold', 0.0, 1.0 ).onChange( function ( value ) {
@@ -881,6 +925,7 @@ class CharacterControllerDemo {
 				render();
 
 			} );
+      */
 
       var parameters = { minFilter: THREE.LinearFilter, type: THREE.HalfFloatType , magFilter: THREE.LinearFilter, format: THREE.RGBAFormat, colorSpace: THREE.SRGBColorSpace, stencilBuffer: false };
       var renderTarget = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, parameters );
@@ -911,16 +956,16 @@ class CharacterControllerDemo {
 
     this._glitchPass = new GlitchPass();
     
-    this._threejs.toneMapping = THREE.ACESFilmicToneMapping;
+    this._threejs.toneMapping = THREE.NoToneMapping ;
     this._threejs.toneMappingExposure = 1;
-    const outputPass = new OutputPass(this._threejs);
+    const outputPass = new OutputPass(this._threejs,renderTarget);
 
-    this._finalComposer = new EffectComposer( this._threejs );
+    this._finalComposer = new EffectComposer( this._threejs,renderTarget );
     this._finalComposer.setSize(window.innerWidth, window.innerHeight);
     this._finalComposer.addPass( renderScene );
     this._finalComposer.addPass( finalPass );
     //this._finalComposer.addPass( this._glitchPass );
-    this._finalComposer.addPass( outputPass );
+    //this._finalComposer.addPass( outputPass );
 
     
     //this._glitchPass.goWild = 1;
@@ -988,6 +1033,7 @@ class CharacterControllerDemo {
       action.enable = true;
 
       gltf.scene.traverse(c => {
+        if ( c.material )c.material.emissive = new THREE.Color( 0x888888 );
         c.layers.toggle(BLOOM_SCENE);
       });
 
@@ -1026,7 +1072,7 @@ class CharacterControllerDemo {
       this._gateTextMixer.push(mixer);
       fbx.traverse(c => {
         c.layers.toggle(BLOOM_SCENE);
-        if ( c.material )c.material.emissive = new THREE.Color( 0xcc002c );
+        if ( c.material )c.material.emissive = new THREE.Color( 0xfb204f );
       });
       this._scene.add(fbx); 
       });
@@ -1162,7 +1208,7 @@ class CharacterControllerDemo {
       }
       let m = new THREE.PointsMaterial({
         size: 1.0, 
-        color: 0xF0EED2,
+        color: 0xbcbcbc,
         map: new THREE.TextureLoader().load("https://threejs.org/examples/textures/sprites/circle.png"),
         onBeforeCompile: shader => {
           shader.uniforms.utime = u.utime;
@@ -1225,14 +1271,14 @@ class CharacterControllerDemo {
 
   _LoadParticleEnv() {
     var points = [];
-    var numPoints_i = 301;
-    var numPoints_j = 801;
+    var numPoints_i = 401;
+    var numPoints_j = 1001;
 
     // Create the points
     for (var i = 0; i < numPoints_i; i++) {
         for (var j = 0; j < numPoints_j; j++) {
-            var x = i / numPoints_i * 800- 400; // Scale the x position to range from -5 to 5
-            var z = j / numPoints_j * 800 - 400; // Scale the y position to range from -5 to 5
+            var x = i / numPoints_i * 1200- 600; // Scale the x position to range from -5 to 5
+            var z = j / numPoints_j * 1200 - 600; // Scale the y position to range from -5 to 5
             var y = 0; // Set z position to 0
             points.push(x, y, z);
           }
@@ -1247,10 +1293,10 @@ class CharacterControllerDemo {
       }
       let m = new THREE.PointsMaterial({
         size: 1.0, 
-        color: 0xFFFFFF,
+        color: 0xbcbcbc,
         transparent: true,
         depthWrite: false,
-        map: new THREE.TextureLoader().load("./resources/particles/p01.png"),
+        map: new THREE.TextureLoader().load("https://threejs.org/examples/textures/sprites/circle.png"),
         onBeforeCompile: shader => {
           shader.uniforms.utime = u.utime;
           shader.uniforms.atime = u.atime;
@@ -1316,7 +1362,7 @@ class CharacterControllerDemo {
     var numPoints = 101;
 
     // Create the points
-    for ( let i = 0; i < 10000; i ++ ) {
+    for ( let i = 0; i < 3000; i ++ ) {
       const x = THREE.MathUtils.randFloatSpread( 2000 );
       const y = THREE.MathUtils.randFloatSpread( 100 );
       const z = THREE.MathUtils.randFloatSpread( 2000 );
@@ -1358,6 +1404,7 @@ class CharacterControllerDemo {
         if(this._bloomLayer.test( obj.layers ) === false){
           this._materials[ obj.uuid ] = obj.material;
           obj.material = this._darkMaterial;
+          
         }
       });
       this._bloomComposer.render();
