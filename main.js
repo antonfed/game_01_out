@@ -765,6 +765,8 @@ class CharacterControllerDemo {
   _width = window.innerWidth;
   _height = window.innerHeight;
   _threejs = new THREE.WebGLRenderer({antialias: true,});
+  _textwhite;
+  _textblack;
   //util
   _previousRAF = null;
   _listToDo;
@@ -824,6 +826,10 @@ class CharacterControllerDemo {
     this.cameraControls = new OrbitControls(
     this._cameraGame, this._threejs.domElement);
     this.cameraControls.target.set(0, 0, -168);
+    this.cameraControls.minPolarAngle = 0;
+    this.cameraControls.maxPolarAngle = Math.PI * 0.6;
+    this.cameraControls.enabled = false;
+    this.cameraControls.enablePan = false;
     this.cameraControls.update();
     
     const geometry = new THREE.SphereGeometry( 2000, 40, 40 ); 
@@ -845,20 +851,18 @@ class CharacterControllerDemo {
 
 
 
-    let light = new THREE.PointLight(0xFFFFFF, 10.0,0,0.3);
-    light.position.set(0, 4000, 0);
-    //light.target.position.set(0, 0, 0);
-    light.castShadow = true;
-    light.shadow.mapSize.width = 4096;
-    light.shadow.mapSize.height = 4096;
-    this._scene.add(light);
 
-    light = new THREE.PointLight(0xFFFFFF, 10.0,0,1);
+    let light = new THREE.PointLight(0xFFFFFF, 60.0,0,0.5);
     light.position.set(0, 2000, 0);
     //light.target.position.set(0, 0, 0);
-    light.castShadow = true;
-    light.shadow.mapSize.width = 4096;
-    light.shadow.mapSize.height = 4096;
+
+
+    this._scene.add(light);
+
+    light = new THREE.PointLight(0xFFFFFF, 60.0,0,0.5);
+    light.position.set(0, 1200, 0);
+    //light.target.position.set(0, 0, 0);
+
     this._scene.add(light);
 
     light = new THREE.AmbientLight(0xFFFFFF, 1);
@@ -1068,11 +1072,11 @@ class CharacterControllerDemo {
       
       
       this._questionTimeline
-      .to(action, { duration: 5*debugFactor, time: 5,ease: "none"})
+      .to(action, { duration: 3*debugFactor, time: 5,ease: "none"})
       .addPause()
-      .to(action, { duration: 10*debugFactor, time: 15,ease: "none"})
+      .to(action, { duration: 6*debugFactor, time: 15,ease: "none"})
       .addPause()
-      .to(action, { duration: 5*debugFactor, time: 20,ease: "none"})
+      .to(action, { duration: 3*debugFactor, time: 20,ease: "none"})
       .add( function(){ console.log('Woohoo!')})    
       this._scene.add(gltf.scene);  
     });
@@ -1142,6 +1146,10 @@ class CharacterControllerDemo {
       .add( function(){ gsap.to(mainCamera, { duration: 2, fov: 66 }) }.bind(this),"-=4")
       .add( function(){ gsap.to(this.up02.atime, { duration: 3, value: 2 }) }.bind(this),"-=12")
       .add( function(){ this._gameMode = true }.bind(this),"-=4")
+      .add( function(){ this._textblack.visible = false }.bind(this),"-=6")
+      .add( function(){ this._textwhite.visible = false }.bind(this),"-=6")
+      .add( function(){ this.cameraControls.enabled = true; }.bind(this),"-=4")
+      
       .add( function(){ gsap.to(document.getElementsByClassName("movement-pad")[0].style, { duration: 2, opacity: 1 }) }.bind(this),"-=4")
       
       
@@ -1163,9 +1171,12 @@ class CharacterControllerDemo {
       gltf.scene.traverse(c => {
         c.castShadow = true;
         if ( c.material )c.material = createStandartBloomMat();
-        if ( c.material )c.material.emissive = new THREE.Color( 0xffffff );
+        if ( c.material )c.material.color = new THREE.Color( 0x999999 );
+        if ( c.material )c.material.roughness = 1;
+        if ( c.material )c.material.metalness = 1.0;
       });
-      this._scene.add(gltf.scene.clone());
+      this._textwhite = gltf.scene
+      this._scene.add(this._textwhite);
       //gltf.scene.geometry.translate(0,-1000,0);
       //this._scene.add(gltf.scene.clone());
 
@@ -1173,9 +1184,14 @@ class CharacterControllerDemo {
     loader.load('./resources/black_text.glb', (gltf) => {
       gltf.scene.traverse(c => {
         c.castShadow = true;
+        
         if ( c.material )c.material = createStandartBloomMat();
+        if ( c.material )c.material.color = new THREE.Color( 0x000000 );
+        if ( c.material )c.material.roughness = 1;
+        if ( c.material )c.material.metalness = 1.0;
       });
-      this._scene.add(gltf.scene.clone());
+      this._textblack = gltf.scene
+      this._scene.add(this._textblack);
       //gltf.scene.geometry.translate(0,-1000,0);
       //this._scene.add(gltf.scene.clone());
     });
@@ -1233,82 +1249,179 @@ class CharacterControllerDemo {
   
   _LoadParticleEnvSky() {
     const loader = new GLTFLoader();
+    let u = {
+      utime: {value: 192.54},
+      wPos: {value: new THREE.Vector3(0,0,0)},
+      lightPos: {value: new THREE.Vector3()}
+    }
+    let m = new THREE.PointsMaterial({
+      size: 1.0, 
+      color: 0xbcbcbc,
+      map: new THREE.TextureLoader().load("https://threejs.org/examples/textures/sprites/circle.png"),
+      onBeforeCompile: shader => {
+        shader.uniforms.utime = u.utime;
+        shader.uniforms.wPos = u.wPos;
+        shader.vertexShader = `
+          uniform float utime; // just the force of habit to add it :)
+          uniform vec3 wPos;
+          varying float vShade;
+          
+          ${simplexNoise}
+          
+          float map(float value, float min1, float max1, float min2, float max2) {
+            return min2 + (value - min1) * (max2 - min2) / (max1 - min1);
+          }
+          
+          vec3 getPoint(vec3 p){
+            float mutime = utime*(snoise( p*1000.0)+1.0)*10000.0;
+            float fqq = 1000.0;
+            float mod = mutime - fqq * floor(mutime * (1.0/fqq));
+            float map01 = map(distance(wPos, position),50.0,500.0,0.7,0.0);
+            float map02 = clamp(map(distance(wPos, position),50.0,500.0,0.0,300.0),0.0,1.0);
+            float map03 = clamp(map(distance(wPos, position),100.0,400.0,0.0,300.0),0.0,2.0);
+            float map04 = clamp(map(distance(wPos, position),150.0,300.0,0.0,300.0),0.0,2.0);
 
+            return p + vec3(0.0, mod,0.0);
+            
+          }
+          
+          ${shader.vertexShader}
+        `.replace(
+          `#include <begin_vertex>`,
+          `#include <begin_vertex>
+            
+            vec3 p0 = getPoint(position);
+            
+            transformed = p0;
+          `
+        ).replace(
+          `gl_PointSize = size;`,
+          `gl_PointSize = size;`
+        );
+        shader.uniforms.globalDark = uniforms.globalDark;
+        shader.fragmentShader = `
+        #include <fog_pars_fragment>
+        
+        uniform float globalDark;
+        uniform sampler2D map;
+        void main() {
+        gl_FragColor = texture2D(map, gl_PointCoord)*globalDark*0.3;
+        #include <fog_fragment>
+        }`
+        
+        }
+    });
+    let ml = new THREE.PointsMaterial({
+      size: 1.0, 
+      color: 0x4287f5,
+      map: new THREE.TextureLoader().load("https://threejs.org/examples/textures/sprites/circle.png"),
+      onBeforeCompile: shader => {
+        shader.uniforms.utime = u.utime;
+        shader.uniforms.wPos = u.wPos;
+        shader.vertexShader = `
+          uniform float utime; // just the force of habit to add it :)
+          uniform vec3 wPos;
+          varying float vShade;
+          
+          ${simplexNoise}
+          
+          float map(float value, float min1, float max1, float min2, float max2) {
+            return min2 + (value - min1) * (max2 - min2) / (max1 - min1);
+          }
+          
+          vec3 getPoint(vec3 p){
+            float mutime = utime*(snoise( p*1000.0)+1.0)*10000.0;
+            float fqq = 2000.0;
+            float mod = mutime - fqq * floor(mutime * (1.0/fqq));
+            float map01 = map(distance(wPos, position),50.0,500.0,0.7,0.0);
+            float map02 = clamp(map(distance(wPos, position),50.0,500.0,0.0,300.0),0.0,1.0);
+            float map03 = clamp(map(distance(wPos, position),100.0,400.0,0.0,300.0),0.0,2.0);
+            float map04 = clamp(map(distance(wPos, position),150.0,300.0,0.0,300.0),0.0,2.0);
+
+            return p + vec3(0.0, mod,0.0);
+            
+          }
+          
+          ${shader.vertexShader}
+        `.replace(
+          `#include <begin_vertex>`,
+          `#include <begin_vertex>
+            
+            vec3 p0 = getPoint(position);
+            
+            transformed = p0;
+          `
+        ).replace(
+          `gl_PointSize = size;`,
+          `gl_PointSize = size;`
+        );
+        shader.fragmentShader = `
+        uniform vec3 diffuse;
+        uniform float opacity;
+
+        #include <common>
+        #include <color_pars_fragment>
+        #include <map_particle_pars_fragment>
+        #include <fog_pars_fragment>
+        #include <shadowmap_pars_fragment>
+        #include <logdepthbuf_pars_fragment>
+        #include <clipping_planes_pars_fragment>
+
+        void main() {
+
+	      #include <clipping_planes_fragment>
+
+	      vec3 outgoingLight = vec3( 0.0 );
+	      vec4 diffuseColor = vec4( diffuse, opacity );
+
+	      #include <logdepthbuf_fragment>
+	      #include <map_particle_fragment>
+	      #include <color_fragment>
+	      #include <alphatest_fragment>
+
+	      outgoingLight = diffuseColor.rgb;
+
+	      gl_FragColor = vec4( outgoingLight, diffuseColor.a )*4.0;
+
+	      #include <premultiplied_alpha_fragment>
+	      #include <tonemapping_fragment>
+	      #include <encodings_fragment>
+	      #include <fog_fragment>
+        }`
+        }
+    });
     
 
     //const material = new THREE.PointsMaterial( { color: 0x888888 } );
     loader.load('./resources/sky.glb', (gltf) => {
-      let u = {
-        utime: {value: 192.54},
-        wPos: {value: new THREE.Vector3(0,0,0)},
-        lightPos: {value: new THREE.Vector3()}
-      }
-      let m = new THREE.PointsMaterial({
-        size: 1.0, 
-        color: 0xbcbcbc,
-        map: new THREE.TextureLoader().load("https://threejs.org/examples/textures/sprites/circle.png"),
-        onBeforeCompile: shader => {
-          shader.uniforms.utime = u.utime;
-          shader.uniforms.wPos = u.wPos;
-          shader.vertexShader = `
-            uniform float utime; // just the force of habit to add it :)
-            uniform vec3 lightPos;
-            uniform vec3 wPos;
-            varying float vShade;
-            
-            ${simplexNoise}
-            
-            float map(float value, float min1, float max1, float min2, float max2) {
-              return min2 + (value - min1) * (max2 - min2) / (max1 - min1);
-            }
-            
-            vec3 getPoint(vec3 p){
-              float mutime = utime*(snoise( p*1000.0)+1.0)*10000.0;
-              float fqq = 1000.0;
-              float mod = mutime - fqq * floor(mutime * (1.0/fqq));
-              float map01 = map(distance(wPos, position),50.0,500.0,0.7,0.0);
-              float map02 = clamp(map(distance(wPos, position),50.0,500.0,0.0,300.0),0.0,1.0);
-              float map03 = clamp(map(distance(wPos, position),100.0,400.0,0.0,300.0),0.0,2.0);
-              float map04 = clamp(map(distance(wPos, position),150.0,300.0,0.0,300.0),0.0,2.0);
-
-              return p + vec3(0.0, mod,0.0);
-              
-            }
-            
-            ${shader.vertexShader}
-          `.replace(
-            `#include <begin_vertex>`,
-            `#include <begin_vertex>
-              
-              vec3 p0 = getPoint(position);
-              
-              transformed = p0;
-            `
-          ).replace(
-            `gl_PointSize = size;`,
-            `gl_PointSize = size;`
-          );
-          shader.uniforms.globalDark = uniforms.globalDark;
-          shader.fragmentShader = `
-          uniform float globalDark;
-          uniform sampler2D map;
-          void main() {
-          gl_FragColor = texture2D(map, gl_PointCoord)*globalDark*0.3;}`
-          }
-      });
-
-      this.up01 = u;
-
       gltf.scene.traverse(c => {
         c.castShadow = true;
         c.material = m;
       });
-      //console.log(gltf.scene.children[0].geometry);
       this._scene.add(gltf.scene.clone());
-      //gltf.scene.position.add(new THREE.Vector3(0,-3,0));  
-      this._scene.add(gltf.scene);
     });
-    //console.log(gltf.scene)
+
+    var points = [];
+    // Create the points
+    for ( let i = 0; i < 500; i ++ ) {
+      const x = THREE.MathUtils.randFloatSpread( 300 );
+      const y = THREE.MathUtils.randFloatSpread( 1000 )+3000;
+      const z = THREE.MathUtils.randFloatSpread( 300 );
+    
+      points.push( x, y, z );
+    }
+
+
+    var geometry = new THREE.BufferGeometry();
+    const array1 = new Float32Array( points );
+    geometry.setAttribute( 'position', new THREE.BufferAttribute( array1, 3 ) );
+    var pointsMesh = new THREE.Points(geometry, ml);
+
+    this._scene.add(pointsMesh);
+
+
+
+    this.up01 = u;
     this._loadProgress("land_particles");
   }
 
@@ -1347,7 +1460,6 @@ class CharacterControllerDemo {
           shader.vertexShader = `
             uniform float utime;
             uniform float atime; // just the force of habit to add it :)
-            uniform vec3 lightPos;
             uniform vec3 wPos;
             varying float vShade;
             
@@ -1432,7 +1544,6 @@ class CharacterControllerDemo {
         shader.vertexShader = `
           uniform float utime;
           uniform float atime; // just the force of habit to add it :)
-          uniform vec3 lightPos;
           uniform vec3 wPos;
           varying float vShade;
           
