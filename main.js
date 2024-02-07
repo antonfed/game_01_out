@@ -211,7 +211,12 @@ class BasicCharacterController {
 
     //touchpad rotation
     if(touchActive){
-    _R.setFromUnitVectors(touchDir.normalize(),new THREE.Vector3(0,0,1)).normalize()
+      //const camVector = new THREE.Vector3;
+      var camVector = this._params.level.cameraControls.object.position.clone().sub(this._params.level.cameraControls.target);
+
+      //console.log(camVector);
+      _R.setFromUnitVectors(touchDir.normalize(),camVector.multiply(new THREE.Vector3(1,0,1)).normalize()).normalize()
+    //_R.setFromUnitVectors(touchDir.normalize(),new THREE.Vector3(0,0,1)).normalize()
     }
     
     
@@ -754,8 +759,13 @@ class CharacterControllerDemo {
 
     this.cameraControls = new OrbitControls(
     this._cameraGame, this._threejs.domElement);
-    this.cameraControls.target.set(0, 0, -150);
+    this.cameraControls.target.set(0, 0, -168);
     this.cameraControls.update();
+    
+    const geometry = new THREE.BoxGeometry( 1, 1, 1 ); 
+    const material = new THREE.MeshBasicMaterial( {color: 0x00ff00} ); 
+    const cube = new THREE.Mesh( geometry, material ); 
+    this._scene.add( cube );
     
     
     this._scene.fog = new THREE.Fog( 0x1F1A27, 400, 1000);
