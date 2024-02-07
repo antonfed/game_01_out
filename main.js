@@ -1063,7 +1063,7 @@ class CharacterControllerDemo {
       .to(action, { duration: animation.duration*debugFactor, time: animation.duration,ease: "none"})
 
       //.to(this._camera, { duration: 2, fov: 46 })
-      .add( function(){ gsap.to(mainCamera, { duration: 2, fov: 40 }) }.bind(this),"-=4")
+      .add( function(){ gsap.to(mainCamera, { duration: 2, fov: 66 }) }.bind(this),"-=4")
       .add( function(){ gsap.to(this.up02.atime, { duration: 3, value: 2 }) }.bind(this),"-=6")
       //.add( function(){ gsap.to(mainCamera, { duration: 2, fov: 40 }) }.bind(this),"-=1.5")
       //.add( function(){ gsap.to(this.up02.atime, { duration: 3, value: 2 }) }.bind(this),"-=2.5")
