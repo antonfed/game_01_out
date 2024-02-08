@@ -6,11 +6,141 @@ import {OrbitControls} from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples
 import { EffectComposer } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/postprocessing/RenderPass.js';
 import { ShaderPass } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/postprocessing/ShaderPass.js';
-import { GlitchPass } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/postprocessing/GlitchPass.js';
+//import { GlitchPass } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/postprocessing/GlitchPass.js';
 import { UnrealBloomPass } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/postprocessing/OutputPass.js';
 import { GUI } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/libs/lil-gui.module.min.js';
 import TouchControls from './resources/controller/TouchControls.js'
+
+import {
+	DataTexture,
+	FloatType,
+	MathUtils,
+	RedFormat,
+	LuminanceFormat,
+	ShaderMaterial,
+	UniformsUtils
+} from 'three';
+import { Pass, FullScreenQuad } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/postprocessing/Pass.js';
+import { DigitalGlitch } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/shaders/DigitalGlitch.js';
+
+class GlitchPass extends Pass {
+
+	constructor( dt_size = 64 ) {
+
+		super();
+
+		const shader = DigitalGlitch;
+
+		this.uniforms = UniformsUtils.clone( shader.uniforms );
+
+		this.heightMap = this.generateHeightmap( dt_size );
+
+		this.uniforms[ 'tDisp' ].value = this.heightMap;
+
+		this.material = new ShaderMaterial( {
+			uniforms: this.uniforms,
+			vertexShader: shader.vertexShader,
+			fragmentShader: shader.fragmentShader
+		} );
+
+		this.fsQuad = new FullScreenQuad( this.material );
+
+		this.goWild = false;
+		this.curF = 0;
+		this.generateTrigger();
+
+	}
+
+	render( renderer, writeBuffer, readBuffer /*, deltaTime, maskActive */ ) {
+
+		if ( renderer.capabilities.isWebGL2 === false ) this.uniforms[ 'tDisp' ].value.format = LuminanceFormat;
+
+		this.uniforms[ 'tDiffuse' ].value = readBuffer.texture;
+		this.uniforms[ 'seed' ].value = Math.random();//default seeding
+		this.uniforms[ 'byp' ].value = 0;
+
+		if ( this.curF % this.randX == 0 || this.goWild == true ) {
+
+			this.uniforms[ 'amount' ].value = Math.random() / 300;
+			this.uniforms[ 'angle' ].value = MathUtils.randFloat( - Math.PI, Math.PI );
+			this.uniforms[ 'seed_x' ].value = MathUtils.randFloat( - 1, 1 );
+			this.uniforms[ 'seed_y' ].value = MathUtils.randFloat( - 1, 1 );
+			this.uniforms[ 'distortion_x' ].value = MathUtils.randFloat( 0, 0.1 );
+			this.uniforms[ 'distortion_y' ].value = MathUtils.randFloat( 0, 0.1 );
+			this.curF = 0;
+			this.generateTrigger();
+
+		} else if ( this.curF % this.randX < this.randX / 5 ) {
+
+			this.uniforms[ 'amount' ].value = Math.random() / 300;
+			this.uniforms[ 'angle' ].value = MathUtils.randFloat( - Math.PI, Math.PI );
+			this.uniforms[ 'distortion_x' ].value = MathUtils.randFloat( 0, 0.1 );
+			this.uniforms[ 'distortion_y' ].value = MathUtils.randFloat( 0, 0.1 );
+			this.uniforms[ 'seed_x' ].value = MathUtils.randFloat( - 0.3, 0.3 );
+			this.uniforms[ 'seed_y' ].value = MathUtils.randFloat( - 0.3, 0.3 );
+
+		} else if ( this.goWild == false ) {
+
+			this.uniforms[ 'byp' ].value = 1;
+
+		}
+
+		this.curF ++;
+
+		if ( this.renderToScreen ) {
+
+			renderer.setRenderTarget( null );
+			this.fsQuad.render( renderer );
+
+		} else {
+
+			renderer.setRenderTarget( writeBuffer );
+			if ( this.clear ) renderer.clear();
+			this.fsQuad.render( renderer );
+
+		}
+
+	}
+
+	generateTrigger() {
+
+		this.randX = MathUtils.randInt( 120, 240 );
+
+	}
+
+	generateHeightmap( dt_size ) {
+
+		const data_arr = new Float32Array( dt_size * dt_size );
+		const length = dt_size * dt_size;
+
+		for ( let i = 0; i < length; i ++ ) {
+
+			const val = MathUtils.randFloat( 0, 1 );
+			data_arr[ i ] = val;
+
+		}
+
+		const texture = new DataTexture( data_arr, dt_size, dt_size, RedFormat, FloatType );
+		texture.needsUpdate = true;
+		return texture;
+
+	}
+
+	dispose() {
+
+		this.material.dispose();
+
+		this.heightMap.dispose();
+
+		this.fsQuad.dispose();
+
+	}
+
+}
+
+
+
 
 THREE.ShaderChunk.fog_pars_vertex += `
 #ifdef USE_FOG
@@ -789,6 +919,10 @@ class CharacterControllerDemo {
       paused:true, 
       defaults:{duration:12, scale:0}
     });
+    this._cameraTimeline = gsap.timeline({
+      paused:true, 
+      defaults:{duration:12, scale:0}
+    });
 
     
     
@@ -1077,6 +1211,7 @@ class CharacterControllerDemo {
       .to(action, { duration: 6*debugFactor, time: 15,ease: "none"})
       .addPause()
       .to(action, { duration: 3*debugFactor, time: 20,ease: "none"})
+      .add( function(){this._cameraTimeline.play()}.bind(this))
       .add( function(){ console.log('Woohoo!')})    
       this._scene.add(gltf.scene);  
     });
@@ -1138,7 +1273,8 @@ class CharacterControllerDemo {
       action.enable = true;      
       mainCamera = this._camera;
 
-      this._questionTimeline
+
+      this._cameraTimeline
       .add( function(){ this._controls._stateMachine.SetState('idle'); }.bind(this))
       .add( function(){ this._controls._stateMachine.SetState('fall'); }.bind(this))
       .to(action, { duration: animation.duration*debugFactor, time: animation.duration,ease: "none"})
@@ -1314,7 +1450,7 @@ class CharacterControllerDemo {
     });
     let ml = new THREE.PointsMaterial({
       size: 1.0, 
-      color: 0x4287f5,
+      color: 0xffffff,
       map: new THREE.TextureLoader().load("https://threejs.org/examples/textures/sprites/circle.png"),
       onBeforeCompile: shader => {
         shader.uniforms.utime = u.utime;
@@ -1382,7 +1518,7 @@ class CharacterControllerDemo {
 
 	      outgoingLight = diffuseColor.rgb;
 
-	      gl_FragColor = vec4( outgoingLight, diffuseColor.a )*4.0;
+	      gl_FragColor = vec4( outgoingLight, diffuseColor.a )*2.0;
 
 	      #include <premultiplied_alpha_fragment>
 	      #include <tonemapping_fragment>
@@ -1641,6 +1777,7 @@ class CharacterControllerDemo {
 
     //this._glitchTimer +=timeElapsed;
     //this._glitchPass.curF = this._glitchTimer*0.001*10;
+    console.log(this._glitchPass.uniforms.amount.value);
     this._glitchPass.uniforms.amount.value=0.00001;
     this._glitchPass.uniforms.distortion_x.value=0.00001;
     this._glitchPass.uniforms.distortion_y.value=0.00001;
