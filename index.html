@@ -16,6 +16,8 @@
         justify-content: center;
         align-items: center;
         height: 100vh;
+        align-items: center;
+				flex-direction: column;
     }
 
     #startButton {
@@ -31,12 +33,27 @@
     cursor: pointer;
     transition: background-color 0.3s, color 0.3s, border-color 0.3s; /* Smooth transition */
   }
+  #progressLoadDiv
+  {
+    display: inline-block;
+    color: #ffffff; /* Text color */
+    text-align: center;
+  }
+  #progressLoad
+  {
+    display: inline-block;
+    color: #ffffff; /* Text color */
+    text-align: center;
+  }
   
   </style>
 </head>
 <body>
-    <button id="startButton" style="display: block;" class="ui">DIVE IN</button>
-  
+    <button id="startButton" style="display: none;" class="ui">DIVE IN</button>
+    <div id="progressLoadDiv">
+    <p>load</p>
+    <p id="progressLoad">0%</p>
+    </div>
   <video id="video" loop crossOrigin="anonymous" playsinline style="display:none">
     <source src="./resources/lsm1_1.mp4" type='video/mp4; codecs="avc1.42E01E, mp4a.40.2"'>
   </video>

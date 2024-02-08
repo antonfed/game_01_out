@@ -329,11 +329,11 @@ class BasicCharacterController {
       const loader = new FBXLoader(this._manager);
       loader.setPath('./resources/zombie/');
       console.log("startFBX_03")
-      loader.load('walk.fbx', (a) => { _OnLoad('walk', a);this._params.level._loadProgress("walk") });
-      loader.load('run.fbx', (a) => { _OnLoad('run', a);this._params.level._loadProgress("run") });
-      loader.load('idle.fbx', (a) => { _OnLoad('idle', a);this._params.level._loadProgress("idle") });
+      loader.load('walk.fbx', (a) => { _OnLoad('walk', a);this._params.level._loadProgress("StateWalk") });
+      loader.load('run.fbx', (a) => { _OnLoad('run', a);this._params.level._loadProgress("StateRun") });
+      loader.load('idle.fbx', (a) => { _OnLoad('idle', a);this._params.level._loadProgress("StateIdle") });
       //loader.load('StandingUp.fbx', (a) => { _OnLoad('dance', a);this._params.level._loadProgress("dance") });
-      loader.load('Fall.fbx', (a) => { _OnLoad('fall', a);this._params.level._loadProgress("fall") });
+      loader.load('Fall.fbx', (a) => { _OnLoad('fall', a);this._params.level._loadProgress("StateFall") });
     });
   }
 
@@ -1005,8 +1005,9 @@ class CharacterControllerDemo {
 
     this._scene.background = new THREE.Color( 0x000000 );
 
-    this._listToDo = ["env sky","env land","gates","textFall","GateText","Question","Camera",
+    this._listToDo = ["sky_particles","land_particles","Gates","textFall","GateText","Question","Camera",
                       "StateRun","StateWalk","StateFall","StateIdle"];
+    this._listToDoLength = this._listToDo.length;
     this._LoadAnimatedModel();
     this._LoadParticleEnv();
     this._LoadParticleEnvSky();
@@ -1024,17 +1025,23 @@ class CharacterControllerDemo {
 
   }
 
-  _loadProgress(message){
-    if(this._listToDo.length==this._toDoProgress){
+  _loadProgress(item){
+    var index = this._listToDo.indexOf(item);
+    if (index !== -1) {this._listToDo.splice(index, 1);}
+    if(this._listToDo.length == 0){
       document.getElementById( 'startButton').style.display = "block";
       document.getElementById( 'startButton').addEventListener( 'click', this._levelStart.bind(this));
+      console.log("go!");
     }
-    this._toDoProgress+=1;
-    console.log(message);
+    console.log(item);
+    console.log(this._listToDo);  
+    const pcnt = Math.floor((1-this._listToDo.length/this._listToDoLength*1.0)*100);
+    document.getElementById("progressLoad").innerHTML = pcnt.toString()+"%";
   }
 
 
-  _levelStart() {     
+  _levelStart() { 
+    document.getElementById("progressLoadDiv").style.display = "none";   
     document.getElementById( 'startButton').style.display = "none"; 
     this._controls.animTexture.play();  
     this._questionTimeline.play();
@@ -1215,7 +1222,7 @@ class CharacterControllerDemo {
       .add( function(){ console.log('Woohoo!')})    
       this._scene.add(gltf.scene);  
     });
-    this._loadProgress("question01");
+    this._loadProgress("Question");
   }
 
   _LoadGateText() {
@@ -1246,7 +1253,7 @@ class CharacterControllerDemo {
       });
       
     });
-    this._loadProgress("gate_text");  
+    this._loadProgress("GateText");  
   }
   
   _LoadCamera() {
@@ -1298,7 +1305,7 @@ class CharacterControllerDemo {
       this._bloomSetup();
    
     });
-  this._loadProgress("camera"); 
+  this._loadProgress("Camera"); 
   }
 
   _LoadTextFall() {
@@ -1332,7 +1339,7 @@ class CharacterControllerDemo {
       //gltf.scene.geometry.translate(0,-1000,0);
       //this._scene.add(gltf.scene.clone());
     });
-    this._loadProgress("text_fall");
+    this._loadProgress("textFall");
   }
 
   _LoadInfoSphere() {
@@ -1381,7 +1388,7 @@ class CharacterControllerDemo {
       });
       this._scene.add(gltf.scene);
     });
-    this._loadProgress("gates");
+    this._loadProgress("Gates");
   }
   
   _LoadParticleEnvSky() {
@@ -1732,7 +1739,7 @@ class CharacterControllerDemo {
 
     this._scene.add(pointsMesh);
     
-    this._loadProgress("sky _particles");
+    this._loadProgress("sky_particles");
   }
 
   _LoadModel() {
