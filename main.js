@@ -71,7 +71,7 @@ class GlitchPass extends Pass {
 			this.curF = 0;
 			this.generateTrigger();
 
-		} else if ( this.curF % this.randX < this.randX / 5 ) {
+		} else if ( this.curF % this.randX < this.randX / 15 ) {
 
 			this.uniforms[ 'amount' ].value = Math.random() / 300;
 			this.uniforms[ 'angle' ].value = MathUtils.randFloat( - Math.PI, Math.PI );
@@ -105,7 +105,7 @@ class GlitchPass extends Pass {
 
 	generateTrigger() {
 
-		this.randX = MathUtils.randInt( 120, 240 );
+		this.randX = MathUtils.randInt( 220, 340 );
 
 	}
 
