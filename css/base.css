@@ -74,5 +74,17 @@ background-color: #000000;
     border: 2px solid #ffffff; /* Border color */
     border-radius: 20px; /* Rounded border */
     background-color: transparent; /* Transparent background */
-
+}
+#exit{
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 70px;
+    height: 55px;
+    background: transparent;
+    background-image: url(".././resources/EXIT_AUTO.png");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border: 0;
 }

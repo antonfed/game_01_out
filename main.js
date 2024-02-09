@@ -1,7 +1,6 @@
-let debugFactor = 0.1; //ANIMATION SPEED FOR FASTER DECEND
+let debugFactor = 1.0; //ANIMATION SPEED FOR FASTER DECEND
 
 //#region IMPORTS
-import {gsap} from  'gsap';
 import * as THREE from 'three';
 import {FBXLoader} from 'three/addons/loaders/FBXLoader.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
@@ -171,7 +170,7 @@ function findNearestObject(objects, position, maxDistance) {
 //#endregion 
 
 //#region UI
-document.getElementById( 'info').addEventListener( 'click', removeInfo);
+document.getElementById( 'exit').addEventListener( 'click', removeInfo);
 document.getElementById( 'interact').addEventListener( 'click', showInfo);
 function showInfo(){
   document.getElementById( 'info').style.display = "block";
