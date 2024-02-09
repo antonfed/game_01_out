@@ -1,4 +1,4 @@
-let debugFactor = 1.; //ANIMATION SPEED FOR FASTER DECEND
+let debugFactor = 1.0; //ANIMATION SPEED FOR FASTER DECEND
 
 //#region IMPORTS
 import {gsap} from  'gsap';
@@ -1457,8 +1457,10 @@ class Level {
           `.replace(
             `#include <begin_vertex>`,
             `#include <begin_vertex>
-              
-              vec3 p0 = getPoint(position);
+                float distance = length(position - vec3(0.0,0.0,125.0));
+                float offset = sin(distance*distance * 0.001 - utime * 50.0) * clamp(map(distance,0.0,150.0,1.0,0.0),0.0,1.0)*30.0;
+            
+              vec3 p0 = getPoint(position) + vec3(0.0,0.2,0.0) * offset;
               
               transformed = p0;
             `
@@ -1546,7 +1548,7 @@ class Level {
           ${shader.vertexShader}
         `.replace(
           `#include <begin_vertex>`,
-          `#include <begin_vertex>
+          `#include <begin_vertex>            
             
             vec3 p0 = getPoint(position);
             
