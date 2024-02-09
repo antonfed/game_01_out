@@ -29,6 +29,8 @@ background-color: #000000;
 }
 #progressLoadDiv
 {   
+    line-height: 0;
+    font-family: "Segoe UI", Arial, sans-serif;
     top: 70%;
     left: 50%;
     transform: translate(-50%, -50%);
@@ -39,6 +41,7 @@ background-color: #000000;
 }
 #progressLoad
 {   
+    
     display: inline-block;
     color: #ffffff; /* Text color */
     text-align: center;

@@ -1,4 +1,4 @@
-let debugFactor = 1.0; //ANIMATION SPEED FOR FASTER DECEND
+let debugFactor = 1.; //ANIMATION SPEED FOR FASTER DECEND
 
 //#region IMPORTS
 import {gsap} from  'gsap';
@@ -183,7 +183,7 @@ function removeInfo(){
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2(-100,-100);
 
-function onPointerMove( event ) {
+function onMouseMove( event ) {
 	// calculate pointer position in normalized device coordinates
 	// (-1 to +1) for both components
 	pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1;
@@ -196,7 +196,7 @@ function onPointerDown( event ) {
 	pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1;
 	pointer.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
 }
-window.addEventListener( 'pointermove', onPointerMove );
+window.addEventListener( 'mousemove', onMouseMove );
 window.addEventListener( 'pointerdown', onPointerDown );
 //#endregion
 
