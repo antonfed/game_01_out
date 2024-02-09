@@ -68,8 +68,9 @@ background-color: #000000;
     height: 80vh;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);   
     backdrop-filter: blur(10px);
+    -webkit-filter: blur(10px);
     border: 2px solid #ffffff; /* Border color */
     border-radius: 20px; /* Rounded border */
     background-color: transparent; /* Transparent background */
