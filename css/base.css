@@ -1,0 +1,44 @@
+
+.ui {
+  position: absolute;    		
+}
+body {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    align-items: center;
+    flex-direction: column;
+    overscroll-behavior: none;
+}
+
+#startButton {
+display: inline-block;
+padding: 10px 20px;
+border: 2px solid #ffffff; /* Border color */
+border-radius: 20px; /* Rounded border */
+background-color: transparent; /* Transparent background */
+color: #ffffff; /* Text color */
+font-size: 18px;
+text-align: center;
+text-decoration: none;
+cursor: pointer;
+transition: background-color 0.3s, color 0.3s, border-color 0.3s; /* Smooth transition */
+}
+#progressLoadDiv
+{
+display: inline-block;
+color: #ffffff; /* Text color */
+text-align: center;
+}
+#progressLoad
+{
+display: inline-block;
+color: #ffffff; /* Text color */
+text-align: center;
+}
