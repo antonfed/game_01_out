@@ -1481,7 +1481,7 @@ class Level {
       for (var i = 0; i < numPoints_i; i++) {
           for (var j = 0; j < numPoints_j; j++) {
               var x = i / numPoints_i * 1200- 600; // Scale the x position to range from -5 to 5
-              var z = j / numPoints_j * 1200 - 600; // Scale the y position to range from -5 to 5
+              var z = j / numPoints_j * 1200 - 300; // Scale the y position to range from -5 to 5
               var y = 0; // Set z position to 0
               points.push(x, y, z);
             }
@@ -1625,10 +1625,10 @@ class Level {
     this.cameraControls.update();
 
     //OBJECT INTERACTION
-    const nearObjectDist = findNearestObject(this._interactable,currPos,100);
+    const nearObjectDist = findNearestObject(this._interactable,currPos,75);
     if(nearObjectDist[0]){
       this._interactButton.style.display = "block";
-      this._interactButton.style.opacity = THREE.MathUtils.mapLinear(nearObjectDist[1],100.0,60.0,0.0,1.0);
+      this._interactButton.style.opacity = THREE.MathUtils.mapLinear(nearObjectDist[1],75.0,50.0,0.0,1.0);
     }
     else {document.getElementById( 'interact').style.display = "none";}
     
