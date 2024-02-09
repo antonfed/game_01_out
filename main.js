@@ -1,4 +1,4 @@
-let debugFactor = 0.1; //ANIMATION SPEED FOR FASTER DECEND
+let debugFactor = 1.0; //ANIMATION SPEED FOR FASTER DECEND
 
 //#region IMPORTS
 import {gsap} from  'gsap';
