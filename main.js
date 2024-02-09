@@ -196,8 +196,7 @@ function onPointerDown( event ) {
 	pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1;
 	pointer.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
 }
-window.addEventListener( 'mousemove', onMouseMove );
-window.addEventListener( 'pointerdown', onPointerDown );
+
 //#endregion
 
 //#region CHARACTER RELATED
@@ -925,7 +924,9 @@ class Level {
     this._controls.animTexture.play();  
     this._questionTimeline.play();
     this._RAF();
-    document.body.addEventListener('click', this._progressAnimation.bind(this), true);    
+    document.body.addEventListener('click', this._progressAnimation.bind(this), true);
+    window.addEventListener( 'mousemove', onMouseMove );
+    window.addEventListener( 'pointerdown', onPointerDown );   
   }
 
   _bloomSetup() {
@@ -1001,6 +1002,8 @@ class Level {
       intersects[0].object.hovered = false;
       this._questionTimeline.play();
     }
+    pointer.x=-1;
+    pointer.y=-1;
   
   }
 
@@ -1101,7 +1104,7 @@ class Level {
       .to(action, { duration: animation.duration*debugFactor, time: animation.duration,ease: "none"})
       
       .add( function(){ gsap.to(this._camera, { duration: 2, fov: 66 }) }.bind(this),"-=4")
-      .add( function(){ gsap.to(this.u.atime, { duration: 3, value: 2 }) }.bind(this),"-=11.9")
+      .add( function(){ gsap.to(this.u.atime, { duration: 3, value: 2.3 }) }.bind(this),"-=11.9")
       .add( function(){ this._gameMode = true }.bind(this),"-=4")
       .add( function(){ this._textblack.visible = false }.bind(this),"-=6")
       .add( function(){ this._textwhite.visible = false }.bind(this),"-=6")
