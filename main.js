@@ -1647,7 +1647,7 @@ class Level {
 	  const intersects = raycaster.intersectObjects( this._clickable );
 		if(intersects[0]){
       const obj = intersects[0].object;
-      if(obj.hovered)obj.parent.material.emissive.set( 0xff0000 )
+      if(obj.hovered)obj.parent.material.emissive.set( 0xbbbbbb )
     };
 
 
