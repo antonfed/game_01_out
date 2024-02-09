@@ -1,44 +1,74 @@
-
-.ui {
-  position: absolute;    		
-}
-body {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    align-items: center;
-    flex-direction: column;
-    overscroll-behavior: none;
+body
+{
+outline: none;
+width: 100vw;
+height: 100vh;
+margin: 0;
+padding: 0;
+touch-action: none;
+color: #ffffff;
+background-color: #000000;	
 }
 
 #startButton {
-display: inline-block;
-padding: 10px 20px;
-border: 2px solid #ffffff; /* Border color */
-border-radius: 20px; /* Rounded border */
-background-color: transparent; /* Transparent background */
-color: #ffffff; /* Text color */
-font-size: 18px;
-text-align: center;
-text-decoration: none;
-cursor: pointer;
-transition: background-color 0.3s, color 0.3s, border-color 0.3s; /* Smooth transition */
+    z-index: 10;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: inline-block;
+    padding: 10px 20px;
+    border: 2px solid #ffffff; /* Border color */
+    border-radius: 20px; /* Rounded border */
+    background-color: transparent; /* Transparent background */
+    color: #ffffff; /* Text color */
+    font-size: 18px;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
 }
 #progressLoadDiv
-{
-display: inline-block;
-color: #ffffff; /* Text color */
-text-align: center;
+{   
+    top: 70%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    position: absolute;
+    display: inline-block;
+    color: #ffffff; /* Text color */
+    text-align: center;
 }
 #progressLoad
-{
-display: inline-block;
-color: #ffffff; /* Text color */
-text-align: center;
+{   
+    display: inline-block;
+    color: #ffffff; /* Text color */
+    text-align: center;
+}
+#interact{
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 58px;
+    height: 58px;
+    background: transparent;
+    background-image: url(".././resources/INTERACT.png");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border: 0;
+}
+
+#info{
+    z-index: 12;    
+    position: absolute;
+    width: 80vw;
+    height: 80vh;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    backdrop-filter: blur(10px);
+    border: 2px solid #ffffff; /* Border color */
+    border-radius: 20px; /* Rounded border */
+    background-color: transparent; /* Transparent background */
+
 }

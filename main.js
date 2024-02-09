@@ -1,4 +1,6 @@
-//IMPORTS
+let debugFactor = 0.1; //ANIMATION SPEED FOR FASTER DECEND
+
+//#region IMPORTS
 import {gsap} from  'gsap';
 import * as THREE from 'three';
 import {FBXLoader} from 'three/addons/loaders/FBXLoader.js';
@@ -16,12 +18,9 @@ import { DigitalGlitch } from 'three/addons/shaders/DigitalGlitch.js';
 //LOCAL RESOURCES
 import TouchControls from './resources/controller/TouchControls.js'
 import * as shadersExternal from './resources/shaders/shaders.js'
+//#endregion
 
-
-
-
-
-
+//#region CUSTOMIZING STANDARD THREE JS ADDONS
 //CUSTOM GLITCH PASS
 class GlitchPass extends Pass {
   constructor(dt_size = 64) {
@@ -91,7 +90,6 @@ class GlitchPass extends Pass {
 }
 
 //CUSTOM FOG SHADER
-function configureFogShader(){
 THREE.ShaderChunk.fog_pars_vertex += `
 #ifdef USE_FOG
   varying vec3 vWorldPosition;
@@ -119,11 +117,9 @@ THREE.ShaderChunk.fog_pars_vertex += `
   fogFactor = fogFactor*fogFactor2;
   ${FOG_APPLIED_LINE}
 `);
-}
-configureFogShader()
+//#endregion
 
-
-//BLOOM UNFORMS AND BLOOM MATERIAL. USED ACROSS CLASSES. 
+//#region USED ACROSS CLASSES.BLOOM AND OTHER
 let uniforms = {
   globalDark: {value: 0},
 }
@@ -156,19 +152,55 @@ const masterMaterial = new THREE.MeshStandardMaterial(
 return masterMaterial
 }
 
+function findNearestObject(objects, position, maxDistance) {
+  let nearestObject = null;
+  let nearestDistance = maxDistance;
 
+  objects.forEach(object => {
+      // Assuming each object has a position attribute that is a THREE.Vector3
+      let distance = object.position.distanceTo(position);
 
+      if (distance < nearestDistance) {
+          nearestDistance = distance;
+          nearestObject = object;
+      }
+  });
 
+  return [nearestObject,nearestDistance];
+}
+//#endregion 
 
+//#region UI
+document.getElementById( 'info').addEventListener( 'click', removeInfo);
+document.getElementById( 'interact').addEventListener( 'click', showInfo);
+function showInfo(){
+  document.getElementById( 'info').style.display = "block";
+}
+function removeInfo(){
+  document.getElementById( 'info').style.display = "none";
+}
 
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2(-100,-100);
 
+function onPointerMove( event ) {
+	// calculate pointer position in normalized device coordinates
+	// (-1 to +1) for both components
+	pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+	pointer.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+}
 
-//ANIMATION SPEED FOR FASTER DECEND
-let debugFactor = 1;
+function onPointerDown( event ) {
+	// calculate pointer position in normalized device coordinates
+	// (-1 to +1) for both components
+	pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+	pointer.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+}
+window.addEventListener( 'pointermove', onPointerMove );
+window.addEventListener( 'pointerdown', onPointerDown );
+//#endregion
 
-
-
-//CHARACTER(
+//#region CHARACTER RELATED
 class BasicCharacterControllerProxy {
   constructor(animations) {
     this._animations = animations;
@@ -230,14 +262,10 @@ class BasicCharacterController {
 
   _LoadModels() {
     console.log("startFBX_02")
-    const texture = new THREE.TextureLoader().load('resources/glitch.jpg' );
-    
-    texture.wrapS = THREE.RepeatWrapping;
-    texture.wrapT = THREE.RepeatWrapping;
     this.animTexture = document.getElementById( 'video' );
 	  const videoTexture = new THREE.VideoTexture(this.animTexture);
     const loader = new FBXLoader();
-    loader.setPath('./resources/zombie/');
+    loader.setPath('./resources/character/');
     
     loader.load('mremireh_o_desbiens_my.fbx', (fbx) => {
       console.log("startFBX_02.5")  
@@ -273,7 +301,7 @@ class BasicCharacterController {
       };
 
       const loader = new FBXLoader(this._manager);
-      loader.setPath('./resources/zombie/');
+      loader.setPath('./resources/character/');
       console.log("startFBX_03")
       loader.load('walk.fbx', (a) => { _OnLoad('walk', a);this._params.level._loadProgress("StateWalk") });
       loader.load('run.fbx', (a) => { _OnLoad('run', a);this._params.level._loadProgress("StateRun") });
@@ -749,9 +777,7 @@ class IdleState extends State {
     }
   }
 };
-
-
-
+//#endregion
 
 //LEVEL
 class Level {
@@ -777,6 +803,11 @@ class Level {
   //util
   _previousRAF = null;
   _listToDo;
+  
+  //interface
+  _interactButton = document.getElementById( 'interact');
+  _clickable = [];
+  _interactable = [];
 
   constructor() {
     this._Initialize();
@@ -786,12 +817,15 @@ class Level {
     document.getElementById( 'startButton').style.display = "none";
     this._questionTimeline = gsap.timeline({
       paused:true, 
-      defaults:{duration:12, scale:0}
+      defaults:{duration:12, scale:0},
+      timeScale: debugFactor
     });
     this._cameraTimeline = gsap.timeline({
       paused:true, 
-      defaults:{duration:12, scale:0}
+      defaults:{duration:12, scale:0},
+      timeScale: debugFactor
     });
+
 
     this.u = {
       utime: {value: 192.54},
@@ -806,6 +840,8 @@ class Level {
     this._threejs.setClearColor(0x000000, 0.0);
 
     document.body.appendChild(this._threejs.domElement);
+
+    
 
     window.addEventListener('resize', () => {
       this._OnWindowResize();
@@ -956,7 +992,16 @@ class Level {
   }
   
   _progressAnimation() {
-    this._questionTimeline.play();  
+    raycaster.setFromCamera( pointer, this._camera );
+    console.log(pointer);
+	  const intersects = raycaster.intersectObjects( this._clickable );
+		if(intersects[0]){
+      console.log(intersects[0].object);
+      intersects[0].object.parent.material.emissive.set( 0xffffff );
+      intersects[0].object.hovered = false;
+      this._questionTimeline.play();
+    }
+  
   }
 
   _LoadAnimatedModel() {
@@ -1002,7 +1047,13 @@ class Level {
       action.enable = true;
 
       gltf.scene.traverse(c => {
-        if ( c.material )c.material.emissive = new THREE.Color( 0x888888 );
+        if ( c.name.includes("bbox") ) this._clickable.push(c);
+        if ( c.name.includes("bbox") ) c.visible = false;
+        if ( c.name.includes("bbox") ) c.hovered = true;
+        if ( c.material )c.material = new THREE.MeshStandardMaterial();
+        if ( c.material )c.material.color = new THREE.Color( 0x000000 );
+        if ( c.material )c.material.emissiveIntensity = 0.5 ;
+        if ( c.material )c.material.emissive = new THREE.Color( 0xffffff ); ;
       });
 
       
@@ -1018,36 +1069,6 @@ class Level {
       this._scene.add(gltf.scene);  
     });
     this._loadProgress("Question");
-  }
-
-  _LoadGateText() {
-    const textList = ["trade_wealth","gamble_luck","sex_lust","battle_fight", "power_control"]
-    const loader = new FBXLoader();
-    textList.forEach((filename ) => {
-      
-         
-      
-      loader.load('./resources/' + filename +'_text.fbx', (fbx) => {
-        for ( var track in fbx.animations[ 0 ].tracks) {
-          
-          fbx.animations[ 0 ].tracks[track].setInterpolation (THREE.InterpolateDiscrete);
-        }    
-        const mixer = new THREE.AnimationMixer(fbx);
-        
-        fbx.animations.forEach( ( clip ) => {
-        const action = mixer.clipAction(clip);
-        action.play();  
-        } );
-      this._gateTextMixer.push(mixer);
-      fbx.traverse(c => {
-        
-        if ( c.material )c.material.emissive = new THREE.Color( 0xfb204f );
-      });
-      this._scene.add(fbx); 
-      });
-      
-    });
-    this._loadProgress("GateText");  
   }
   
   _LoadCamera() {
@@ -1158,12 +1179,42 @@ class Level {
 
     loader.load('./resources/sphere.glb', (gltf) => {
       gltf.scene.traverse(c => {        
-        if ( c.material )c.material = m;
+        if (c.material )c.material = m;
+        if (c.isMesh) this._interactable.push(c);
       });
       this._scene.add(gltf.scene);
     });
   }
   
+  _LoadGateText() {
+    const textList = ["trade_wealth","gamble_luck","sex_lust","battle_fight", "power_control"]
+    const loader = new FBXLoader();
+    textList.forEach((filename ) => {
+      
+         
+      
+      loader.load('./resources/' + filename +'_text.fbx', (fbx) => {
+        for ( var track in fbx.animations[ 0 ].tracks) {          
+          fbx.animations[ 0 ].tracks[track].setInterpolation (THREE.InterpolateDiscrete);
+        }    
+        const mixer = new THREE.AnimationMixer(fbx);        
+        fbx.animations.forEach( ( clip ) => {
+          const action = mixer.clipAction(clip);
+          action.play();  
+        });
+      this._gateTextMixer.push(mixer);
+      fbx.traverse(c => {
+        
+        if ( c.material )c.material.emissive = new THREE.Color( 0xfb204f );
+      });
+      fbx.name = filename;
+      this._scene.add(fbx); 
+      });
+      
+    });
+    this._loadProgress("GateText");  
+  }
+
   _LoadGates() {
     const loader = new GLTFLoader();
     
@@ -1175,7 +1226,10 @@ class Level {
         if ( c.material )c.material.emissiveMap = videoTexture;
         if ( c.material )c.material.map = videoTexture;
         if ( c.material )c.material.emissive = new THREE.Color( 0xff0000 );
+        if (c.isMesh) this._interactable.push(c);
+        
       });
+      
       this._scene.add(gltf.scene);
     });
     this._loadProgress("Gates");
@@ -1556,6 +1610,7 @@ class Level {
   }
 
   _Step(timeElapsed) {
+    //#region FUNCTION
     const currPos = this._controls._target.getWorldPosition(new THREE.Vector3());
     
     this._camera.position.copy(this._cameraGame.position)
@@ -1569,9 +1624,30 @@ class Level {
     
     this.cameraControls.update();
 
+    //OBJECT INTERACTION
+    const nearObjectDist = findNearestObject(this._interactable,currPos,100);
+    if(nearObjectDist[0]){
+      this._interactButton.style.display = "block";
+      this._interactButton.style.opacity = THREE.MathUtils.mapLinear(nearObjectDist[1],100.0,60.0,0.0,1.0);
+    }
+    else {document.getElementById( 'interact').style.display = "none";}
     
+    //TEXT INTERACTION
     
-    
+    //RETURN COLOR
+    this._clickable.forEach( c => {
+      if(c.hovered)c.parent.material.emissive.set( 0x777777 );
+    }); 
+
+    raycaster.setFromCamera( pointer, this._camera );
+	  const intersects = raycaster.intersectObjects( this._clickable );
+		if(intersects[0]){
+      const obj = intersects[0].object;
+      if(obj.hovered)obj.parent.material.emissive.set( 0xff0000 )
+    };
+
+
+
     //SHADER UNIFORMS
     this.u.wPos.value = currPos;
     this.u.utime.value+=timeElapsed*0.00001;
@@ -1598,6 +1674,8 @@ class Level {
     this._finalComposer.render(this._scene, this._camera);
     
     this._prevPos = currPos;
+
+    //#endregion
   }
 }
 
