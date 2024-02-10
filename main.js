@@ -1685,6 +1685,4 @@ class Level {
 
 //INIT LEVEL
 let _APP = null;
-window.addEventListener('DOMContentLoaded', () => {
-  _APP = new Level();
-});
+_APP = new Level();
